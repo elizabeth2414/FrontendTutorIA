@@ -1,0 +1,14 @@
+{
+  "appId": "com.bookireadia.app",
+  "appName": "BookiReadIA",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http" ,
+    "allowNavigation": [
+      "192.168.54.20"
+    ]
+  }
+
+}
