@@ -38,7 +38,7 @@ import EditarCuentaPadre from "./pages/padre/Editarcuentapadre.jsx";
 import MenuAdmin from "./pages/admin/MenuAdmin.jsx";
 import DashboardAdmin from "./pages/admin/DashboardAdmin.jsx";
 import DocentesGestion from "./pages/admin/DocentesGestion.jsx";
-import EstudiantesAdminGestion from "./pages/admin/EstudiantesAdminGestion.jsx";
+
 
 function App() {
   return (
@@ -115,7 +115,6 @@ function App() {
 
         <Route path="dashboard" element={<DashboardAdmin />} />
         <Route path="docentes" element={<DocentesGestion />} />
-        <Route path="estudiantes" element={<EstudiantesAdminGestion />} />
       </Route>
 
     </Routes>
