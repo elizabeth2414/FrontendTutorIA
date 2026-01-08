@@ -1,7 +1,7 @@
 // src/services/authService.js
 
 import axiosClient from "../api/axiosClient";
-import Logger from "../logs/logger";
+import logger from "../logs/logger";
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
@@ -13,10 +13,10 @@ const AUTH_BASE = "/auth";
 export const registroUsuario = async (data) => {
   try {
     const res = await axiosClient.post(`${AUTH_BASE}/registro`, data);
-    Logger.info("POST /auth/registro", res.data);
+    logger.info("POST /auth/registro", res.data);
     return res.data;
   } catch (error) {
-    Logger.error("Error en registro de usuario", error);
+    logger.error("Error en registro de usuario", error);
     throw error;
   }
 };
@@ -44,10 +44,10 @@ export const login = async (email, password) => {
       localStorage.setItem("token", res.data.access_token);
     }
 
-    Logger.info("✅ Login exitoso", { email });
+    logger.info("✅ Login exitoso", { email });
     return res.data;
   } catch (error) {
-    Logger.error("❌ Error en login", error);
+    logger.error("❌ Error en login", error);
     throw error;
   }
 };
@@ -75,10 +75,10 @@ export const getUsuarioActual = async () => {
       localStorage.setItem("roles", JSON.stringify(roles));
     }
 
-    Logger.info("GET /auth/me", res.data);
+    logger.info("GET /auth/me", res.data);
     return res.data;
   } catch (error) {
-    Logger.error("Error obteniendo usuario actual", error);
+    logger.error("Error obteniendo usuario actual", error);
     throw error;
   }
 };
@@ -89,10 +89,10 @@ export const getUsuarioActual = async () => {
 export const cambiarPassword = async (data) => {
   try {
     const res = await axiosClient.post(`${AUTH_BASE}/cambio-password`, data);
-    Logger.info("POST /auth/cambio-password", res.data);
+    logger.info("POST /auth/cambio-password", res.data);
     return res.data;
   } catch (error) {
-    Logger.error("Error cambiando password", error);
+    logger.error("Error cambiando password", error);
     throw error;
   }
 };
@@ -103,10 +103,10 @@ export const cambiarPassword = async (data) => {
 export const solicitarResetPassword = async (email) => {
   try {
     const res = await axiosClient.post(`${AUTH_BASE}/reset-password`, { email });
-    Logger.info("POST /auth/reset-password", res.data);
+    logger.info("POST /auth/reset-password", res.data);
     return res.data;
   } catch (error) {
-    Logger.error("Error solicitando reset password", error);
+    logger.error("Error solicitando reset password", error);
     throw error;
   }
 };
@@ -120,10 +120,10 @@ export const confirmarResetPassword = async (token, nuevo_password) => {
       token,
       nuevo_password,
     });
-    Logger.info("POST /auth/confirm-reset-password", res.data);
+    logger.info("POST /auth/confirm-reset-password", res.data);
     return res.data;
   } catch (error) {
-    Logger.error("Error confirmando reset password", error);
+    logger.error("Error confirmando reset password", error);
     throw error;
   }
 };
@@ -140,9 +140,9 @@ export const logout = async () => {
       localStorage.removeItem("token");
       localStorage.removeItem("roles");
     }
-    Logger.info("✅ Logout exitoso");
+    logger.info("✅ Logout exitoso");
   } catch (error) {
-    Logger.error("Error en logout", error);
+    logger.error("Error en logout", error);
     throw error;
   }
 };
@@ -153,10 +153,10 @@ export const logout = async () => {
 export const registrarPadre = async (data) => {
   try {
     const res = await axiosClient.post(`/auth/registro-padre`, data);
-    Logger.info("POST /auth/registro-padre", res.data);
+    logger.info("POST /auth/registro-padre", res.data);
     return res.data;
   } catch (error) {
-    Logger.error("Error al registrar padre", error);
+    logger.error("Error al registrar padre", error);
     throw error;
   }
 };

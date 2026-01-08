@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
+import logger from "../../logs/logger";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -26,12 +27,12 @@ export default function EstudiantesAdminGestion() {
     try {
       setLoading(true);
       const res = await axiosClient.get("/admin/estudiantes");
-      Logger.api("GET /admin/estudiantes", res.data);
+      logger.api("GET /admin/estudiantes", res.data);
 
       setEstudiantes(res.data || []);
       setFiltrados(res.data || []);
     } catch (error) {
-      Logger.error("Error listando estudiantes (admin)", error);
+      logger.error("Error listando estudiantes (admin)", error);
     } finally {
       setLoading(false);
     }
