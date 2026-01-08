@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
-import Logger from "../../logs/logger";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
