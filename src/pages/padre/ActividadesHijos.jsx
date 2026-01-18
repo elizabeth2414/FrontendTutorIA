@@ -11,20 +11,23 @@ import {
   MdArrowForward,
   MdBook,
   MdTimer,
-  MdStars
+  MdStars,
+  MdSearch,
+  MdArrowBack
 } from "react-icons/md";
-import { Capacitor } from "@capacitor/core";
 
 export default function ActividadesHijos() {
   const [hijos, setHijos] = useState([]);
   const [hijosConActividades, setHijosConActividades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  // Detectar si es móvil
-  const isMobile = Capacitor.isNativePlatform();
-  const platform = Capacitor.getPlatform(); // 'ios', 'android', 'web'
+  // Filtrar hijos por término de búsqueda
+  const hijosFiltrados = hijosConActividades.filter(hijo =>
+    `${hijo.nombre} ${hijo.apellido}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // ==========================
   // Cargar hijos y sus actividades
@@ -108,7 +111,6 @@ export default function ActividadesHijos() {
 
             lecturasCompletadasConActividades.forEach(lectura => {
               totalActividades += lectura.actividades.length;
-              // TODO: Agregar lógica para contar completadas cuando tengas ese campo
             });
 
             hijosConActividadesTemp.push({
@@ -150,63 +152,34 @@ export default function ActividadesHijos() {
   }, []);
 
   // ==========================
-  // PANTALLA DE CARGA MEJORADA
+  // PANTALLA DE CARGA
   // ==========================
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="text-center space-y-6">
-          {/* Animación de carga mejorada */}
-          <div className="relative">
-            {/* Círculo exterior rotando */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-24 h-24 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-            </div>
-            {/* Círculo medio pulsando */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 border-4 border-indigo-200 border-b-indigo-600 rounded-full animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }}></div>
-            </div>
-            {/* Círculo interior con ícono */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full animate-pulse flex items-center justify-center">
-                <MdQuiz className="text-white" size={32} />
-              </div>
-            </div>
-          </div>
-
-          {/* Texto de carga con animación */}
-          <div className="mt-32 space-y-2">
-            <h3 className={`font-bold text-slate-700 animate-pulse ${isMobile ? 'text-lg' : 'text-xl'}`}>
-              Cargando actividades...
-            </h3>
-            <div className="flex justify-center gap-1">
-              <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
-              <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></span>
-              <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></span>
-            </div>
-          </div>
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Cargando actividades...</p>
         </div>
       </div>
     );
   }
 
   // ==========================
-  // PANTALLA DE ERROR MEJORADA
+  // PANTALLA DE ERROR
   // ==========================
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 sm:p-6">
-        <div className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-4">
-          <div className="w-20 h-20 mx-auto rounded-full bg-red-100 flex items-center justify-center">
-            <div className="text-4xl sm:text-5xl">❌</div>
+      <div className="flex items-center justify-center min-h-screen bg-white p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-6 text-center shadow-lg border border-slate-200 space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
+            <div className="text-4xl">❌</div>
           </div>
-          <h3 className={`font-bold text-red-700 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-            Error al cargar
-          </h3>
-          <p className={`text-red-600 ${isMobile ? 'text-sm' : 'text-base'}`}>{error}</p>
+          <h3 className="text-lg font-bold text-red-700">Error al cargar</h3>
+          <p className="text-sm text-red-600">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:shadow-xl transition font-semibold shadow-lg active:scale-95"
+            className="w-full px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:shadow-lg transition font-semibold shadow-md active:scale-95"
           >
             Reintentar
           </button>
@@ -216,273 +189,547 @@ export default function ActividadesHijos() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <main className={`${isMobile ? 'pt-4 px-4 pb-6' : 'pt-24 max-w-7xl mx-auto p-6'} space-y-6 sm:space-y-8`}>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        
+        * {
+          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+      `}</style>
 
-        {/* HEADER - Responsive */}
-        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
-          <div className={`flex items-center gap-3 sm:gap-4 ${isMobile ? 'flex-col text-center' : ''}`}>
-            <div className={`rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg ${isMobile ? 'w-12 h-12' : 'w-14 h-14'}`}>
-              <MdQuiz size={isMobile ? 24 : 28} />
+      {/* VERSIÓN MÓVIL */}
+      <div className="md:hidden min-h-screen bg-white">
+        {/* Header móvil fijo */}
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 shadow-lg z-30">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-white/90 hover:text-white mb-3 transition-colors"
+          >
+            <MdArrowBack size={16} />
+            <span className="font-medium text-xs">Volver</span>
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <MdQuiz size={20} className="text-white" />
             </div>
-            <div className={isMobile ? 'w-full' : 'flex-1'}>
-              <h1 className={`font-extrabold text-blue-700 ${isMobile ? 'text-xl' : 'text-3xl md:text-4xl'}`}>
-                Actividades de Comprensión
-              </h1>
-              <p className={`text-slate-600 mt-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                Practica las lecturas y resuelve actividades generadas por IA
-              </p>
+            <div>
+              <h1 className="text-base font-bold text-white mb-0.5">Actividades</h1>
+              <p className="text-xs text-blue-100">{hijosConActividades.length} hijo{hijosConActividades.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
         </div>
 
-        {/* LISTA DE HIJOS */}
-        {hijosConActividades.length === 0 ? (
-          <div className="bg-white border-2 border-slate-200 rounded-2xl p-8 sm:p-10 text-center shadow-lg">
-            <div className={`mb-4 ${isMobile ? 'text-5xl' : 'text-6xl'}`}>📭</div>
-            <h3 className={`font-semibold text-gray-700 mb-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-              No hay hijos vinculados
-            </h3>
-            <p className={`text-gray-500 mb-6 ${isMobile ? 'text-sm' : 'text-base'}`}>
-              Aún no tienes hijos vinculados a tu cuenta.
-            </p>
-            <button
-              onClick={() => navigate("/padre/menu/hijos")}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition font-semibold shadow-lg active:scale-95"
-            >
-              Ir a Mis Hijos
-            </button>
+        {/* Contenido móvil */}
+        <main className="pt-32 px-4 pb-8">
+          {/* Buscador móvil */}
+          <div className="mb-5">
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                <MdSearch size={18} className="text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar hijo..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none text-sm transition-all"
+              />
+            </div>
           </div>
-        ) : (
-          <div className="space-y-6 sm:space-y-8">
 
-            {hijosConActividades.map((hijo) => (
-              <div key={hijo.id} className="space-y-3 sm:space-y-4">
-                
-                {/* HEADER DEL HIJO - Responsive */}
-                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
-                  <div className={`flex items-center ${isMobile ? 'flex-col gap-4' : 'justify-between'}`}>
-                    
-                    {/* Info del hijo */}
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className={`rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg ${isMobile ? 'w-12 h-12 text-lg' : 'w-16 h-16 text-2xl'}`}>
+          {/* Sin hijos */}
+          {hijosConActividades.length === 0 ? (
+            <div className="bg-white border-2 border-slate-200 rounded-xl p-8 text-center">
+              <div className="text-5xl mb-3">📭</div>
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                No hay hijos vinculados
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">
+                Aún no tienes hijos vinculados.
+              </p>
+              <button
+                onClick={() => navigate("/padre/menu/hijos")}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition font-semibold shadow-md active:scale-95"
+              >
+                Ir a Mis Hijos
+              </button>
+            </div>
+          ) : hijosFiltrados.length === 0 ? (
+            <div className="bg-white border-2 border-slate-200 rounded-xl p-8 text-center">
+              <div className="text-5xl mb-3">🔍</div>
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                No se encontraron hijos
+              </h3>
+              <p className="text-sm text-slate-600">
+                Intenta con otro término de búsqueda.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {hijosFiltrados.map((hijo) => (
+                <div key={hijo.id} className="space-y-3">
+                  
+                  {/* Header del hijo móvil */}
+                  <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-md text-lg">
                         {hijo.nombre?.charAt(0)?.toUpperCase() || "?"}
                       </div>
                       <div>
-                        <h2 className={`font-bold text-slate-800 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                        <h2 className="text-base font-bold text-slate-900">
                           {hijo.nombre} {hijo.apellido}
                         </h2>
-                        <p className={`text-slate-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                        <p className="text-xs text-slate-600">
                           Nivel {hijo.nivel_educativo}
                         </p>
                       </div>
                     </div>
 
-                    {/* ESTADÍSTICAS - Stack en móvil */}
-                    <div className={`flex gap-2 sm:gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
-                      <div className={`text-center bg-blue-50 border-2 border-blue-200 rounded-xl ${isMobile ? 'px-3 py-2 flex-1' : 'px-4 py-2'}`}>
-                        <p className={`text-blue-600 font-semibold uppercase ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                    {/* Estadísticas móvil */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center bg-blue-50 border border-blue-200 rounded-lg px-2 py-2">
+                        <p className="text-blue-600 font-semibold uppercase text-[10px]">
                           Completadas
                         </p>
-                        <p className={`font-bold text-blue-700 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                        <p className="font-bold text-blue-700 text-lg">
                           {hijo.lecturasCompletadas.length}
                         </p>
                       </div>
-                      <div className={`text-center bg-purple-50 border-2 border-purple-200 rounded-xl ${isMobile ? 'px-3 py-2 flex-1' : 'px-4 py-2'}`}>
-                        <p className={`text-purple-600 font-semibold uppercase ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                      <div className="text-center bg-purple-50 border border-purple-200 rounded-lg px-2 py-2">
+                        <p className="text-purple-600 font-semibold uppercase text-[10px]">
                           Pendientes
                         </p>
-                        <p className={`font-bold text-purple-700 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                        <p className="font-bold text-purple-700 text-lg">
                           {hijo.lecturasPendientes.length}
                         </p>
                       </div>
-                      <div className={`text-center bg-green-50 border-2 border-green-200 rounded-xl ${isMobile ? 'px-3 py-2 flex-1' : 'px-4 py-2'}`}>
-                        <p className={`text-green-600 font-semibold uppercase ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                      <div className="text-center bg-green-50 border border-green-200 rounded-lg px-2 py-2">
+                        <p className="text-green-600 font-semibold uppercase text-[10px]">
                           Actividades
                         </p>
-                        <p className={`font-bold text-green-700 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                        <p className="font-bold text-green-700 text-lg">
                           {hijo.totalActividades}
                         </p>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* 🔥 LECTURAS COMPLETADAS - MOSTRAR ACTIVIDADES */}
-                {hijo.lecturasCompletadas.length > 0 && (
-                  <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
-                    <h3 className={`font-bold text-green-700 mb-3 sm:mb-4 flex items-center gap-2 ${isMobile ? 'text-base' : 'text-lg'}`}>
-                      <MdCheckCircle size={isMobile ? 20 : 24} />
-                      Lecturas completadas - Actividades disponibles
-                    </h3>
+                  {/* Lecturas completadas móvil */}
+                  {hijo.lecturasCompletadas.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200">
+                      <h3 className="text-sm font-bold text-green-700 mb-3 flex items-center gap-2">
+                        <MdCheckCircle size={18} />
+                        Lecturas completadas
+                      </h3>
 
-                    <div className={`grid gap-3 sm:gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
-                      {hijo.lecturasCompletadas.map((lectura) => (
-                        <div
-                          key={lectura.id}
-                          className="border-2 border-green-200 rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-all duration-300"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h4 className={`font-bold text-slate-800 mb-1 ${isMobile ? 'text-base' : 'text-lg'}`}>
-                                {lectura.titulo}
-                              </h4>
-                              <p className={`text-slate-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                                {lectura.contenido?.substring(0, isMobile ? 60 : 80)}...
+                      <div className="space-y-3">
+                        {hijo.lecturasCompletadas.map((lectura) => (
+                          <div
+                            key={lectura.id}
+                            className="border border-green-200 rounded-lg p-3 bg-green-50"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1">
+                                <h4 className="text-sm font-bold text-slate-900 mb-1">
+                                  {lectura.titulo}
+                                </h4>
+                                <p className="text-xs text-slate-600 line-clamp-2">
+                                  {lectura.contenido?.substring(0, 60)}...
+                                </p>
+                              </div>
+                              <div className="bg-green-100 rounded-full p-1 ml-2 flex-shrink-0">
+                                <MdCheckCircle className="text-green-600" size={16} />
+                              </div>
+                            </div>
+
+                            {/* Actividades */}
+                            <div className="space-y-2 mb-3">
+                              <p className="font-semibold text-slate-600 uppercase text-[10px]">
+                                Actividades ({lectura.actividades.length}):
                               </p>
-                            </div>
-                            <div className={`bg-green-100 rounded-full p-1.5 sm:p-2 ml-2 flex-shrink-0`}>
-                              <MdCheckCircle className="text-green-600" size={isMobile ? 20 : 24} />
-                            </div>
-                          </div>
-
-                          {/* ACTIVIDADES DE ESTA LECTURA */}
-                          <div className="space-y-2 mb-4">
-                            <p className={`font-semibold text-slate-600 uppercase ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-                              Actividades ({lectura.actividades.length}):
-                            </p>
-                            {lectura.actividades.slice(0, 2).map((actividad, idx) => (
-                              <div
-                                key={actividad.id || idx}
-                                className={`flex items-center gap-2 bg-white border border-green-200 rounded-lg ${isMobile ? 'p-2' : 'p-2.5'}`}
-                              >
-                                <MdQuiz className="text-green-600 flex-shrink-0" size={isMobile ? 16 : 18} />
-                                <div className="flex-1 min-w-0">
-                                  <p className={`font-medium text-slate-800 truncate ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                              {lectura.actividades.slice(0, 2).map((actividad, idx) => (
+                                <div
+                                  key={actividad.id || idx}
+                                  className="flex items-center gap-2 bg-white border border-green-200 rounded-lg p-2"
+                                >
+                                  <MdQuiz className="text-green-600 flex-shrink-0" size={14} />
+                                  <p className="text-xs font-medium text-slate-800 truncate flex-1">
                                     {actividad.titulo || `Actividad ${idx + 1}`}
                                   </p>
-                                  <div className={`flex items-center gap-2 text-slate-500 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-                                    {actividad.dificultad && (
-                                      <span className="flex items-center gap-1">
-                                        <MdStars size={10} />
-                                        {actividad.dificultad}
-                                      </span>
-                                    )}
-                                    {actividad.tiempo_estimado && (
-                                      <span className="flex items-center gap-1">
-                                        <MdTimer size={10} />
-                                        {actividad.tiempo_estimado} min
-                                      </span>
-                                    )}
-                                  </div>
                                 </div>
+                              ))}
+                              {lectura.actividades.length > 2 && (
+                                <p className="text-[10px] text-slate-500 text-center">
+                                  + {lectura.actividades.length - 2} más
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Botones */}
+                            {lectura.actividades.length === 1 ? (
+                              <button
+                                onClick={() => navigate(
+                                  `/padre/menu/hijos/${hijo.id}/lecturas/${lectura.id}/actividades/${lectura.actividades[0].id}`,
+                                  { state: { lectura: lectura, estudiante: hijo } }
+                                )}
+                                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold shadow-md px-3 py-2 text-xs active:scale-95 transition-transform"
+                              >
+                                <MdArrowForward size={16} />
+                                Resolver Actividad
+                              </button>
+                            ) : (
+                              <div className="space-y-2">
+                                {lectura.actividades.map((actividad) => (
+                                  <button
+                                    key={actividad.id}
+                                    onClick={() => navigate(
+                                      `/padre/menu/hijos/${hijo.id}/lecturas/${lectura.id}/actividades/${actividad.id}`,
+                                      { state: { lectura: lectura, estudiante: hijo } }
+                                    )}
+                                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold shadow-md px-3 py-2 text-xs active:scale-95 transition-transform"
+                                  >
+                                    <MdQuiz size={14} />
+                                    {actividad.titulo || "Actividad"}
+                                  </button>
+                                ))}
                               </div>
-                            ))}
-                            {lectura.actividades.length > 2 && (
-                              <p className={`text-slate-500 text-center ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-                                + {lectura.actividades.length - 2} más
-                              </p>
                             )}
                           </div>
-
-                          {/* 🔥 BOTONES DE ACTIVIDADES - ACTUALIZADO Y RESPONSIVE */}
-                          {lectura.actividades.length === 1 ? (
-                            // ✅ SI SOLO HAY 1 ACTIVIDAD → IR DIRECTO A RESOLVERLA
-                            <button
-                              onClick={() => navigate(
-                                `/padre/menu/hijos/${hijo.id}/lecturas/${lectura.id}/actividades/${lectura.actividades[0].id}`,
-                                {
-                                  state: {
-                                    lectura: lectura,
-                                    estudiante: hijo
-                                  }
-                                }
-                              )}
-                              className={`w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all active:scale-95 ${isMobile ? 'px-3 py-2.5 text-sm' : 'px-4 py-3'}`}
-                            >
-                              <MdArrowForward size={isMobile ? 18 : 20} />
-                              Resolver Actividad
-                            </button>
-                          ) : (
-                            // ✅ SI HAY MÚLTIPLES ACTIVIDADES → MOSTRAR LISTA
-                            <div className="space-y-2">
-                              {lectura.actividades.map((actividad) => (
-                                <button
-                                  key={actividad.id}
-                                  onClick={() => navigate(
-                                    `/padre/menu/hijos/${hijo.id}/lecturas/${lectura.id}/actividades/${actividad.id}`,
-                                    {
-                                      state: {
-                                        lectura: lectura,
-                                        estudiante: hijo
-                                      }
-                                    }
-                                  )}
-                                  className={`w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all active:scale-95 ${isMobile ? 'px-3 py-2 text-xs' : 'px-4 py-2 text-sm'}`}
-                                >
-                                  <MdQuiz size={isMobile ? 14 : 16} />
-                                  {actividad.titulo || "Actividad"}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* 🔥 LECTURAS PENDIENTES - PRACTICAR */}
-                {hijo.lecturasPendientes.length > 0 && (
-                  <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg">
-                    <h3 className={`font-bold text-blue-700 mb-3 sm:mb-4 flex items-center gap-2 ${isMobile ? 'text-base' : 'text-lg'}`}>
-                      <MdBook size={isMobile ? 20 : 24} />
-                      {isMobile ? "Lecturas pendientes" : "Lecturas pendientes - Practica para desbloquear actividades"}
-                    </h3>
+                  {/* Lecturas pendientes móvil */}
+                  {hijo.lecturasPendientes.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200">
+                      <h3 className="text-sm font-bold text-blue-700 mb-3 flex items-center gap-2">
+                        <MdBook size={18} />
+                        Lecturas pendientes
+                      </h3>
 
-                    <div className={`grid gap-3 sm:gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-                      {hijo.lecturasPendientes.map((lectura) => (
-                        <div
-                          key={lectura.id}
-                          className="border-2 border-blue-200 rounded-2xl p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-lg transition-all"
-                        >
-                          <h4 className={`font-bold text-slate-800 mb-2 ${isMobile ? 'text-sm' : 'text-base'}`}>
-                            {lectura.titulo}
-                          </h4>
-                          <p className={`text-slate-600 mb-3 ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                            {lectura.contenido?.substring(0, isMobile ? 50 : 60)}...
-                          </p>
-
-                          <button
-                            onClick={() => navigate(`/padre/menu/hijos/${hijo.id}/practica-ia`, {
-                              state: {
-                                estudianteId: hijo.id,
-                                lecturaId: lectura.id,
-                                lectura: lectura
-                              }
-                            })}
-                            className={`w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all active:scale-95 ${isMobile ? 'px-3 py-2 text-xs' : 'px-4 py-2 text-sm'}`}
+                      <div className="space-y-3">
+                        {hijo.lecturasPendientes.map((lectura) => (
+                          <div
+                            key={lectura.id}
+                            className="border border-blue-200 rounded-lg p-3 bg-blue-50"
                           >
-                            <MdPlayArrow size={isMobile ? 16 : 18} />
-                            Practicar
-                          </button>
+                            <h4 className="text-sm font-bold text-slate-900 mb-2">
+                              {lectura.titulo}
+                            </h4>
+                            <p className="text-xs text-slate-600 mb-3 line-clamp-2">
+                              {lectura.contenido?.substring(0, 50)}...
+                            </p>
+
+                            <button
+                              onClick={() => navigate(`/padre/menu/hijos/${hijo.id}/practica-ia`, {
+                                state: {
+                                  estudianteId: hijo.id,
+                                  lecturaId: lectura.id,
+                                  lectura: lectura
+                                }
+                              })}
+                              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold shadow-md px-3 py-2 text-xs active:scale-95 transition-transform"
+                            >
+                              <MdPlayArrow size={16} />
+                              Practicar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sin lecturas */}
+                  {hijo.lecturasCompletadas.length === 0 && hijo.lecturasPendientes.length === 0 && (
+                    <div className="bg-white border-2 border-yellow-200 rounded-xl p-6 text-center shadow-md">
+                      <MdLock className="text-yellow-600 mx-auto mb-2" size={32} />
+                      <h3 className="text-sm font-bold text-yellow-700 mb-1">
+                        Sin lecturas asignadas
+                      </h3>
+                      <p className="text-xs text-yellow-600">
+                        El docente aún no ha asignado lecturas.
+                      </p>
+                    </div>
+                  )}
+
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* VERSIÓN DESKTOP */}
+      <div className="hidden md:block min-h-screen bg-white pt-6">
+        <main className="max-w-7xl mx-auto px-6 py-6">
+          {/* Header desktop */}
+          <div className="mb-6">
+            
+
+            <div className="flex items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+                  <MdQuiz size={28} />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900 mb-1">
+                    Actividades de Comprensión
+                  </h1>
+                  <p className="text-sm text-slate-600">
+                    Practica las lecturas y resuelve actividades generadas por IA
+                  </p>
+                </div>
+              </div>
+
+              {/* Buscador desktop */}
+              <div className="w-80">
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                    <MdSearch size={20} className="text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar hijo..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none text-sm transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sin hijos */}
+          {hijosConActividades.length === 0 ? (
+            <div className="bg-white border-2 border-slate-200 rounded-2xl p-16 text-center">
+              <div className="text-6xl mb-4">📭</div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                No hay hijos vinculados
+              </h3>
+              <p className="text-slate-600 mb-6">
+                Aún no tienes hijos vinculados a tu cuenta.
+              </p>
+              <button
+                onClick={() => navigate("/padre/menu/hijos")}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition font-semibold shadow-md"
+              >
+                Ir a Mis Hijos
+              </button>
+            </div>
+          ) : hijosFiltrados.length === 0 ? (
+            <div className="bg-white border-2 border-slate-200 rounded-2xl p-16 text-center">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                No se encontraron hijos
+              </h3>
+              <p className="text-slate-600">
+                Intenta con otro término de búsqueda.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {hijosFiltrados.map((hijo) => (
+                <div key={hijo.id} className="space-y-4">
+                  
+                  {/* Header del hijo desktop */}
+                  <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg text-xl">
+                          {hijo.nombre?.charAt(0)?.toUpperCase() || "?"}
                         </div>
-                      ))}
+                        <div>
+                          <h2 className="text-xl font-bold text-slate-900">
+                            {hijo.nombre} {hijo.apellido}
+                          </h2>
+                          <p className="text-sm text-slate-600">
+                            Nivel {hijo.nivel_educativo}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Estadísticas desktop */}
+                      <div className="flex gap-4">
+                        <div className="text-center bg-blue-50 border border-blue-200 rounded-xl px-4 py-2">
+                          <p className="text-blue-600 font-semibold uppercase text-xs">
+                            Completadas
+                          </p>
+                          <p className="font-bold text-blue-700 text-2xl">
+                            {hijo.lecturasCompletadas.length}
+                          </p>
+                        </div>
+                        <div className="text-center bg-purple-50 border border-purple-200 rounded-xl px-4 py-2">
+                          <p className="text-purple-600 font-semibold uppercase text-xs">
+                            Pendientes
+                          </p>
+                          <p className="font-bold text-purple-700 text-2xl">
+                            {hijo.lecturasPendientes.length}
+                          </p>
+                        </div>
+                        <div className="text-center bg-green-50 border border-green-200 rounded-xl px-4 py-2">
+                          <p className="text-green-600 font-semibold uppercase text-xs">
+                            Actividades
+                          </p>
+                          <p className="font-bold text-green-700 text-2xl">
+                            {hijo.totalActividades}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {/* MENSAJE SI NO HAY NADA */}
-                {hijo.lecturasCompletadas.length === 0 && hijo.lecturasPendientes.length === 0 && (
-                  <div className="bg-white border-2 border-yellow-200 rounded-2xl p-6 sm:p-8 text-center shadow-lg">
-                    <MdLock className="text-yellow-600 mx-auto mb-3" size={isMobile ? 40 : 48} />
-                    <h3 className={`font-bold text-yellow-700 mb-2 ${isMobile ? 'text-base' : 'text-lg'}`}>
-                      Sin lecturas asignadas
-                    </h3>
-                    <p className={`text-yellow-600 ${isMobile ? 'text-sm' : 'text-base'}`}>
-                      El docente aún no ha asignado lecturas a este estudiante.
-                    </p>
-                  </div>
-                )}
+                  {/* Lecturas completadas desktop */}
+                  {hijo.lecturasCompletadas.length > 0 && (
+                    <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-200">
+                      <h3 className="text-base font-bold text-green-700 mb-4 flex items-center gap-2">
+                        <MdCheckCircle size={22} />
+                        Lecturas completadas - Actividades disponibles
+                      </h3>
 
-              </div>
-            ))}
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {hijo.lecturasCompletadas.map((lectura) => (
+                          <div
+                            key={lectura.id}
+                            className="border border-green-200 rounded-xl p-4 bg-green-50 hover:shadow-md transition-all"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h4 className="text-base font-bold text-slate-900 mb-1">
+                                  {lectura.titulo}
+                                </h4>
+                                <p className="text-sm text-slate-600 line-clamp-2">
+                                  {lectura.contenido?.substring(0, 80)}...
+                                </p>
+                              </div>
+                              <div className="bg-green-100 rounded-full p-1.5 ml-2 flex-shrink-0">
+                                <MdCheckCircle className="text-green-600" size={20} />
+                              </div>
+                            </div>
 
-          </div>
-        )}
+                            {/* Actividades */}
+                            <div className="space-y-2 mb-4">
+                              <p className="font-semibold text-slate-600 uppercase text-xs">
+                                Actividades ({lectura.actividades.length}):
+                              </p>
+                              {lectura.actividades.slice(0, 2).map((actividad, idx) => (
+                                <div
+                                  key={actividad.id || idx}
+                                  className="flex items-center gap-2 bg-white border border-green-200 rounded-lg p-2"
+                                >
+                                  <MdQuiz className="text-green-600 flex-shrink-0" size={16} />
+                                  <p className="text-sm font-medium text-slate-800 truncate flex-1">
+                                    {actividad.titulo || `Actividad ${idx + 1}`}
+                                  </p>
+                                </div>
+                              ))}
+                              {lectura.actividades.length > 2 && (
+                                <p className="text-xs text-slate-500 text-center">
+                                  + {lectura.actividades.length - 2} más
+                                </p>
+                              )}
+                            </div>
 
-      </main>
-    </div>
+                            {/* Botones */}
+                            {lectura.actividades.length === 1 ? (
+                              <button
+                                onClick={() => navigate(
+                                  `/padre/menu/hijos/${hijo.id}/lecturas/${lectura.id}/actividades/${lectura.actividades[0].id}`,
+                                  { state: { lectura: lectura, estudiante: hijo } }
+                                )}
+                                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold shadow-md px-4 py-2.5 text-sm hover:shadow-lg transition-all"
+                              >
+                                <MdArrowForward size={18} />
+                                Resolver Actividad
+                              </button>
+                            ) : (
+                              <div className="space-y-2">
+                                {lectura.actividades.map((actividad) => (
+                                  <button
+                                    key={actividad.id}
+                                    onClick={() => navigate(
+                                      `/padre/menu/hijos/${hijo.id}/lecturas/${lectura.id}/actividades/${actividad.id}`,
+                                      { state: { lectura: lectura, estudiante: hijo } }
+                                    )}
+                                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold shadow-md px-4 py-2 text-sm hover:shadow-lg transition-all"
+                                  >
+                                    <MdQuiz size={16} />
+                                    {actividad.titulo || "Actividad"}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lecturas pendientes desktop */}
+                  {hijo.lecturasPendientes.length > 0 && (
+                    <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-200">
+                      <h3 className="text-base font-bold text-blue-700 mb-4 flex items-center gap-2">
+                        <MdBook size={22} />
+                        Lecturas pendientes - Practica para desbloquear actividades
+                      </h3>
+
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {hijo.lecturasPendientes.map((lectura) => (
+                          <div
+                            key={lectura.id}
+                            className="border border-blue-200 rounded-xl p-4 bg-blue-50 hover:shadow-md transition-all"
+                          >
+                            <h4 className="text-base font-bold text-slate-900 mb-2">
+                              {lectura.titulo}
+                            </h4>
+                            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                              {lectura.contenido?.substring(0, 60)}...
+                            </p>
+
+                            <button
+                              onClick={() => navigate(`/padre/menu/hijos/${hijo.id}/practica-ia`, {
+                                state: {
+                                  estudianteId: hijo.id,
+                                  lecturaId: lectura.id,
+                                  lectura: lectura
+                                }
+                              })}
+                              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold shadow-md px-4 py-2 text-sm hover:shadow-lg transition-all"
+                            >
+                              <MdPlayArrow size={18} />
+                              Practicar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sin lecturas */}
+                  {hijo.lecturasCompletadas.length === 0 && hijo.lecturasPendientes.length === 0 && (
+                    <div className="bg-white border-2 border-yellow-200 rounded-2xl p-8 text-center shadow-lg">
+                      <MdLock className="text-yellow-600 mx-auto mb-3" size={48} />
+                      <h3 className="text-lg font-bold text-yellow-700 mb-2">
+                        Sin lecturas asignadas
+                      </h3>
+                      <p className="text-yellow-600">
+                        El docente aún no ha asignado lecturas a este estudiante.
+                      </p>
+                    </div>
+                  )}
+
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    </>
   );
 }

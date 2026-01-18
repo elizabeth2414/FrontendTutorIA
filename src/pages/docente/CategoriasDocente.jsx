@@ -4,17 +4,32 @@ import {
   eliminarCategoria,
 } from "../../services/categoriasService";
 
-import { MdAdd, MdEdit, MdDelete, MdCategory } from "react-icons/md";
+import { 
+  MdAdd, 
+  MdEdit, 
+  MdDelete, 
+  MdCategory,
+  MdSearch,
+  MdWarning,
+  MdCheckCircle,
+  MdError,
+  MdClose,
+} from "react-icons/md";
+
 import ModalCrearCategoria from "../../components/categorias/ModalCrearCategoria";
 import ModalEditarCategoria from "../../components/categorias/ModalEditarCategoria";
 
 export default function CategoriasDocente() {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [mostrarCrear, setMostrarCrear] = useState(false);
   const [categoriaEditar, setCategoriaEditar] = useState(null);
-  const [categoriaEliminar, setCategoriaEliminar] = useState(null);
+  
+  // Modales personalizados
+  const [modalConfirm, setModalConfirm] = useState({ show: false, categoria: null });
+  const [modalAlert, setModalAlert] = useState({ show: false, tipo: '', mensaje: '' });
 
   // =========================
   // CARGAR CATEGORÍAS
@@ -26,6 +41,11 @@ export default function CategoriasDocente() {
       setCategorias(data || []);
     } catch (err) {
       console.error("Error cargando categorias", err);
+      setModalAlert({ 
+        show: true, 
+        tipo: 'error', 
+        mensaje: 'Error al cargar las categorías. Intenta nuevamente.' 
+      });
     } finally {
       setLoading(false);
     }
@@ -36,118 +56,333 @@ export default function CategoriasDocente() {
   }, []);
 
   // =========================
+  // FILTRAR CATEGORÍAS
+  // =========================
+  const categoriasFiltradas = categorias.filter((categoria) => {
+    const searchLower = searchTerm.toLowerCase();
+    const nombre = (categoria.nombre || '').toString().toLowerCase();
+    return nombre.includes(searchLower);
+  });
+
+  // =========================
   // ELIMINAR CATEGORÍA
   // =========================
-  const eliminar = async () => {
+  const eliminar = (categoria) => {
+    setModalConfirm({ show: true, categoria });
+  };
+
+  const confirmarEliminar = async () => {
+    const categoria = modalConfirm.categoria;
+    setModalConfirm({ show: false, categoria: null });
+
     try {
-      await eliminarCategoria(categoriaEliminar.id);
-      setCategoriaEliminar(null);
+      await eliminarCategoria(categoria.id);
       cargarCategorias();
+      setModalAlert({ 
+        show: true, 
+        tipo: 'success', 
+        mensaje: 'Categoría eliminada correctamente' 
+      });
     } catch (err) {
-      console.error("Error eliminando categoría", err);
+      console.error("Error eliminando categoría:", err);
+      setModalAlert({ 
+        show: true, 
+        tipo: 'error', 
+        mensaje: 'No se pudo eliminar la categoría. Intenta nuevamente.' 
+      });
     }
   };
 
-  return (
-    <div className="p-6 animate-fade">
-
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-extrabold text-blue-700 flex items-center gap-2 drop-shadow">
-          <MdCategory size={32} />
-          Gestión de Categorías
-        </h1>
-
-        <button
-          onClick={() => setMostrarCrear(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl flex items-center gap-2 shadow-md transition"
-        >
-          <MdAdd size={22} />
-          Nueva Categoría
-        </button>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Cargando categorías...</p>
+        </div>
       </div>
+    );
+  }
 
-      {/* CUADRO PRINCIPAL */}
-      <div className="bg-white border border-blue-200 rounded-3xl shadow-lg overflow-hidden">
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        
+        * {
+          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+      `}</style>
 
-        {/* HEADER TABLA */}
-        <div className="bg-blue-600 text-white px-6 py-4">
-          <h2 className="text-lg font-semibold tracking-wide">
-            Lista de Categorías
-          </h2>
+      {/* VERSIÓN MÓVIL */}
+      <div className="md:hidden min-h-screen bg-white">
+        {/* Header móvil fijo */}
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 shadow-lg z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <MdCategory size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-base font-bold text-white mb-0.5">Categorías</h1>
+                <p className="text-xs text-blue-100">{categoriasFiltradas.length} categorías</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setMostrarCrear(true)}
+              className="p-2 bg-white text-blue-600 rounded-lg shadow-md hover:bg-blue-50 transition"
+            >
+              <MdAdd size={20} />
+            </button>
+          </div>
         </div>
 
-        {/* CONTENIDO */}
-        {loading ? (
-          <p className="text-gray-500 p-6">Cargando categorías...</p>
-        ) : categorias.length === 0 ? (
-          <p className="text-gray-500 italic p-6">
-            No hay categorías aún.
-          </p>
-        ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b text-gray-700 bg-blue-50">
-                <th className="py-4 px-6 font-semibold">NOMBRE</th>
-                <th className="py-4 px-6 font-semibold">EDAD MIN</th>
-                <th className="py-4 px-6 font-semibold">EDAD MAX</th>
-                <th className="py-4 px-6 font-semibold">COLOR</th>
-                <th className="py-4 px-6 font-semibold">ICONO</th>
-                <th className="py-4 px-6 text-center font-semibold">
-                  ACCIONES
-                </th>
-              </tr>
-            </thead>
+        {/* Búsqueda móvil */}
+        <div className="fixed top-20 left-0 right-0 bg-white px-4 py-3 shadow-md z-20 border-b border-slate-200">
+          <div className="relative">
+            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar categoría..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
 
-            <tbody>
-              {categorias.map((c, idx) => (
-                <tr
-                  key={c.id}
-                  className={`border-b hover:bg-blue-50 transition ${
-                    idx % 2 === 0 ? "bg-white" : "bg-blue-50/20"
-                  }`}
+        {/* Contenido móvil */}
+        <main className="pt-36 px-4 pb-8">
+          {categoriasFiltradas.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-md p-8 text-center border border-slate-200">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                {searchTerm ? (
+                  <MdSearch size={32} className="text-blue-600" />
+                ) : (
+                  <MdCategory size={32} className="text-blue-600" />
+                )}
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                {searchTerm ? 'No se encontraron categorías' : 'No hay categorías'}
+              </h3>
+              <p className="text-sm text-slate-500 mb-4">
+                {searchTerm 
+                  ? 'Intenta con otro término de búsqueda'
+                  : 'Crea tu primera categoría para comenzar'}
+              </p>
+              {!searchTerm && (
+                <button
+                  onClick={() => setMostrarCrear(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold"
                 >
-                  <td className="py-4 px-6 font-medium">{c.nombre}</td>
-                  <td className="py-4 px-6">{c.edad_minima}</td>
-                  <td className="py-4 px-6">{c.edad_maxima}</td>
-
-                  <td className="py-4 px-6">
-                    <div
-                      className="w-6 h-6 rounded-full border shadow"
-                      style={{ backgroundColor: c.color }}
-                    />
-                  </td>
-
-                  <td className="py-4 px-6">{c.icono || "-"}</td>
-
-                  <td className="py-4 px-6">
-                    <div className="flex justify-center gap-3">
-
-                      {/* EDITAR */}
-                      <button
-                        className="p-2 bg-yellow-400 text-black rounded-lg shadow hover:bg-yellow-500 transition"
-                        title="Editar categoría"
-                        onClick={() => setCategoriaEditar(c)}
+                  <MdAdd size={18} />
+                  Nueva Categoría
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {categoriasFiltradas.map((c) => (
+                <div
+                  key={c.id}
+                  className="bg-white rounded-xl shadow-md p-4 border border-slate-200"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        className="w-10 h-10 rounded-lg shadow-sm flex items-center justify-center text-xl"
+                        style={{ backgroundColor: c.color }}
                       >
-                        <MdEdit size={20} />
-                      </button>
-
-                      {/* ELIMINAR */}
-                      <button
-                        className="p-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
-                        title="Eliminar categoría"
-                        onClick={() => setCategoriaEliminar(c)}
-                      >
-                        <MdDelete size={20} />
-                      </button>
-
+                        {c.icono || '📁'}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">
+                          {c.nombre}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Edad: {c.edad_minima} - {c.edad_maxima} años
+                        </p>
+                      </div>
                     </div>
-                  </td>
-                </tr>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCategoriaEditar(c)}
+                        className="p-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition"
+                      >
+                        <MdEdit size={16} />
+                      </button>
+                      <button
+                        onClick={() => eliminar(c)}
+                        className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+                      >
+                        <MdDelete size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* VERSIÓN DESKTOP */}
+      <div className="hidden md:block min-h-screen bg-white pt-6">
+        <main className="max-w-7xl mx-auto px-6 py-6">
+          {/* Header desktop */}
+          <div className="flex justify-between items-center mb-6 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+                <MdCategory size={28} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 mb-1">
+                  Gestión de Categorías
+                </h1>
+                <p className="text-sm text-slate-600">
+                  Administra las categorías de contenido
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Búsqueda desktop */}
+              <div className="relative">
+                <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Buscar categoría..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-64 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <button
+                onClick={() => setMostrarCrear(true)}
+                className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition"
+              >
+                <MdAdd size={20} />
+                Nueva Categoría
+              </button>
+            </div>
+          </div>
+
+          {/* Contenido desktop */}
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            {categoriasFiltradas.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  {searchTerm ? (
+                    <MdSearch size={40} className="text-blue-600" />
+                  ) : (
+                    <MdCategory size={40} className="text-blue-600" />
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {searchTerm ? 'No se encontraron categorías' : 'No hay categorías registradas'}
+                </h3>
+                <p className="text-slate-500 mb-4">
+                  {searchTerm 
+                    ? `No hay resultados para "${searchTerm}"`
+                    : 'Crea tu primera categoría para comenzar'}
+                </p>
+                {!searchTerm && (
+                  <button
+                    onClick={() => setMostrarCrear(true)}
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                  >
+                    <MdAdd size={20} />
+                    Nueva Categoría
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-4 text-left text-sm font-bold text-slate-700">
+                        Nombre
+                      </th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">
+                        Edad Mín
+                      </th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">
+                        Edad Máx
+                      </th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">
+                        Color
+                      </th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">
+                        Icono
+                      </th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {categoriasFiltradas.map((c) => (
+                      <tr
+                        key={c.id}
+                        className="border-b border-slate-100 hover:bg-slate-50 transition"
+                      >
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-8 h-8 rounded-lg shadow-sm flex items-center justify-center text-lg"
+                              style={{ backgroundColor: c.color }}
+                            >
+                              {c.icono || '📁'}
+                            </div>
+                            <span className="font-semibold text-slate-900">{c.nombre}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center text-slate-700">{c.edad_minima}</td>
+                        <td className="py-3 px-4 text-center text-slate-700">{c.edad_maxima}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex justify-center">
+                            <div
+                              className="w-6 h-6 rounded-full border-2 border-slate-300 shadow-sm"
+                              style={{ backgroundColor: c.color }}
+                            />
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center text-xl">{c.icono || '—'}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => setCategoriaEditar(c)}
+                              className="p-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition"
+                              title="Editar categoría"
+                            >
+                              <MdEdit size={18} />
+                            </button>
+                            <button
+                              onClick={() => eliminar(c)}
+                              className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+                              title="Eliminar categoría"
+                            >
+                              <MdDelete size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
 
       {/* MODAL CREAR */}
@@ -167,52 +402,96 @@ export default function CategoriasDocente() {
         />
       )}
 
-      {/* MODAL CONFIRMAR ELIMINAR */}
-      {categoriaEliminar && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div
-            className="
-              bg-white/90 backdrop-blur-xl
-              rounded-3xl shadow-2xl
-              w-full max-w-md p-6
-              border border-red-200 animate-fade
-            "
-          >
-            <h3 className="text-2xl font-extrabold text-red-600 text-center mb-3">
-              ¿Eliminar categoría?
-            </h3>
-
-            <p className="text-gray-700 text-center mb-6">
-              Estás a punto de eliminar la categoría:
-              <br />
-              <span className="font-semibold text-gray-900">
-                {categoriaEliminar.nombre}
-              </span>
-              <br />
-              <span className="text-sm text-gray-500">
-                Esta acción no se puede deshacer.
-              </span>
-            </p>
-
-            <div className="flex justify-end gap-4">
+      {/* MODAL DE CONFIRMACIÓN ELIMINAR */}
+      {modalConfirm.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <MdWarning className="text-red-600" size={24} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Eliminar Categoría
+                </h3>
+              </div>
               <button
-                onClick={() => setCategoriaEliminar(null)}
-                className="px-5 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 transition"
+                onClick={() => setModalConfirm({ show: false, categoria: null })}
+                className="p-1 hover:bg-slate-100 rounded-lg transition"
+              >
+                <MdClose size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-slate-700 mb-2">
+                ¿Estás seguro de eliminar la categoría <strong>{modalConfirm.categoria?.nombre}</strong>?
+              </p>
+              <p className="text-sm text-slate-500">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalConfirm({ show: false, categoria: null })}
+                className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition"
               >
                 Cancelar
               </button>
-
               <button
-                onClick={eliminar}
-                className="px-5 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition shadow-md"
+                onClick={confirmarEliminar}
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
               >
-                Sí, eliminar
+                Eliminar
               </button>
             </div>
           </div>
         </div>
       )}
 
-    </div>
+      {/* MODAL DE ALERTA */}
+      {modalAlert.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  modalAlert.tipo === 'success' ? 'bg-green-100' : 'bg-red-100'
+                }`}>
+                  {modalAlert.tipo === 'success' ? (
+                    <MdCheckCircle className="text-green-600" size={24} />
+                  ) : (
+                    <MdError className="text-red-600" size={24} />
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {modalAlert.tipo === 'success' ? 'Éxito' : 'Error'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setModalAlert({ show: false, tipo: '', mensaje: '' })}
+                className="p-1 hover:bg-slate-100 rounded-lg transition"
+              >
+                <MdClose size={24} />
+              </button>
+            </div>
+
+            <p className="text-slate-700 mb-6">{modalAlert.mensaje}</p>
+
+            <button
+              onClick={() => setModalAlert({ show: false, tipo: '', mensaje: '' })}
+              className={`w-full px-4 py-2.5 text-white rounded-lg font-semibold transition ${
+                modalAlert.tipo === 'success' 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

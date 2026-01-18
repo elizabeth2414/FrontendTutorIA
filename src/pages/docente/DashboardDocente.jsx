@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getResumenDashboard,
   getEstudiantesDocente,
@@ -15,6 +16,8 @@ import {
   MdTableChart,
   MdPictureAsPdf,
   MdAssignment,
+  MdArrowBack,
+  MdDashboard,
 } from "react-icons/md";
 
 import {
@@ -27,11 +30,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 
 export default function DashboardDocente() {
+  const navigate = useNavigate();
   const [resumen, setResumen] = useState({
     total_estudiantes: 0,
     total_lecturas: 0,
@@ -44,7 +47,6 @@ export default function DashboardDocente() {
   const [loading, setLoading] = useState(true);
   const [loadingProgreso, setLoadingProgreso] = useState(false);
 
-  // Datos para gráficos
   const [datosLecturas, setDatosLecturas] = useState([]);
   const [datosActividades, setDatosActividades] = useState([]);
   const [datosEstudiantes, setDatosEstudiantes] = useState([]);
@@ -69,18 +71,9 @@ export default function DashboardDocente() {
       setEstudiantes(estudiantesData ?? []);
       setTotalLecturas(Array.isArray(lecturasData) ? lecturasData.length : 0);
 
-      // 🔥 CALCULAR DATOS REALES DESDE LOS ESTUDIANTES
-      // En lugar de confiar solo en el backend, calculamos nosotros
       const lecturasRealizadasReal = await calcularLecturasReales(estudiantesData);
       const actividadesCompletadasReal = await calcularActividadesReales(estudiantesData);
 
-      console.log("🔍 DATOS DEL BACKEND:", resumenData);
-      console.log("✅ DATOS CALCULADOS:", {
-        lecturas: lecturasRealizadasReal,
-        actividades: actividadesCompletadasReal,
-      });
-
-      // Usar los datos calculados en lugar de los del backend
       const resumenCorregido = {
         total_estudiantes: estudiantesData.length,
         total_lecturas: lecturasRealizadasReal,
@@ -89,39 +82,19 @@ export default function DashboardDocente() {
 
       setResumen(resumenCorregido);
 
-      // Preparar datos para gráfico de lecturas
       const lecturasCompletadas = lecturasRealizadasReal;
       const lecturasDisponibles = Array.isArray(lecturasData) ? lecturasData.length : 0;
       const lecturasPendientes = Math.max(0, lecturasDisponibles - lecturasCompletadas);
-
-      console.log("📊 Lecturas:", {
-        completadas: lecturasCompletadas,
-        pendientes: lecturasPendientes,
-        disponibles: lecturasDisponibles,
-      });
 
       setDatosLecturas([
         { nombre: "Completadas", valor: lecturasCompletadas, color: "#10B981" },
         { nombre: "Pendientes", valor: lecturasPendientes, color: "#F59E0B" },
       ]);
 
-      // Preparar datos para gráfico de actividades
       const actividadesCompletadas = actividadesCompletadasReal;
-      const actividadesEstimadas = Math.max(actividadesCompletadas * 2, actividadesCompletadas + 10);
-      const actividadesPendientes = Math.max(0, actividadesEstimadas - actividadesCompletadas);
+      // 🚫 NO inventar actividades pendientes - no tenemos datos reales
+      setDatosActividades([]);
 
-      console.log("📊 Actividades:", {
-        completadas: actividadesCompletadas,
-        pendientes: actividadesPendientes,
-        estimadas: actividadesEstimadas,
-      });
-
-      setDatosActividades([
-        { nombre: "Completadas", valor: actividadesCompletadas, color: "#8B5CF6" },
-        { nombre: "Pendientes", valor: actividadesPendientes, color: "#EC4899" },
-      ]);
-
-      // Cargar progreso de cada estudiante
       await cargarProgresoEstudiantes(estudiantesData);
     } catch (error) {
       console.error("❌ Error cargando dashboard:", error);
@@ -130,25 +103,18 @@ export default function DashboardDocente() {
     }
   };
 
-  // 🔥 FUNCIÓN NUEVA: Calcular lecturas reales desde estudiantes
   const calcularLecturasReales = async (estudiantesData) => {
     try {
       let totalLecturas = 0;
-
-      // Si los estudiantes tienen información de lecturas
       for (const estudiante of estudiantesData) {
-        // Aquí deberías tener un endpoint que te diga las lecturas del estudiante
-        // Por ahora, vamos a estimar basándonos en el progreso
         try {
           const progreso = await getProgresoEstudiante(estudiante.id);
-          // Estimamos que cada 100 XP = 1 lectura completada
           const lecturasEstimadas = Math.floor((progreso.xp_actual || 0) / 100);
           totalLecturas += lecturasEstimadas;
         } catch (error) {
           console.log(`⚠️ No se pudo obtener progreso de estudiante ${estudiante.id}`);
         }
       }
-
       return totalLecturas;
     } catch (error) {
       console.error("Error calculando lecturas:", error);
@@ -156,22 +122,18 @@ export default function DashboardDocente() {
     }
   };
 
-  // 🔥 FUNCIÓN NUEVA: Calcular actividades reales desde estudiantes
   const calcularActividadesReales = async (estudiantesData) => {
     try {
       let totalActividades = 0;
-
       for (const estudiante of estudiantesData) {
         try {
           const progreso = await getProgresoEstudiante(estudiante.id);
-          // Estimamos que cada 50 XP = 1 actividad completada
           const actividadesEstimadas = Math.floor((progreso.xp_actual || 0) / 50);
           totalActividades += actividadesEstimadas;
         } catch (error) {
           console.log(`⚠️ No se pudo obtener progreso de estudiante ${estudiante.id}`);
         }
       }
-
       return totalActividades;
     } catch (error) {
       console.error("Error calculando actividades:", error);
@@ -193,7 +155,6 @@ export default function DashboardDocente() {
               racha: progreso.racha_actual || 0,
             };
           } catch (error) {
-            console.error(`Error cargando progreso de estudiante ${est.id}:`, error);
             return {
               ...est,
               nivel_gamificacion: 1,
@@ -206,7 +167,6 @@ export default function DashboardDocente() {
 
       setEstudiantesConProgreso(estudiantesConDatos);
 
-      // Preparar datos para gráfico de progreso por estudiante (top 5 con más XP)
       const topEstudiantes = estudiantesConDatos
         .sort((a, b) => (b.xp_total || 0) - (a.xp_total || 0))
         .slice(0, 5)
@@ -225,9 +185,6 @@ export default function DashboardDocente() {
     }
   };
 
-  // ========================================
-  // EXPORTAR A EXCEL
-  // ========================================
   const exportarExcel = async () => {
     try {
       const XLSX = await import("xlsx");
@@ -246,31 +203,16 @@ export default function DashboardDocente() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Estudiantes");
 
-      // Ajustar ancho de columnas
-      const maxWidth = datosExcel.reduce((w, r) => {
-        return Object.keys(r).map((k) => {
-          const val = r[k] ? r[k].toString().length : 10;
-          return Math.max(w[k] || 10, val);
-        });
-      }, {});
-
-      worksheet["!cols"] = Object.keys(datosExcel[0] || {}).map((k) => ({
-        wch: maxWidth[k] || 10,
-      }));
-
       XLSX.writeFile(
         workbook,
         `Estudiantes_${docente?.nombre || "Docente"}_${new Date().toISOString().split("T")[0]}.xlsx`
       );
     } catch (error) {
       console.error("Error exportando a Excel:", error);
-      alert("Error al exportar a Excel. Por favor, intenta de nuevo.");
+      alert("Error al exportar a Excel.");
     }
   };
 
-  // ========================================
-  // EXPORTAR A PDF
-  // ========================================
   const exportarPDF = async () => {
     try {
       const jsPDF = (await import("jspdf")).default;
@@ -278,474 +220,486 @@ export default function DashboardDocente() {
 
       const doc = new jsPDF();
 
-      // Título
       doc.setFontSize(20);
       doc.setTextColor(37, 99, 235);
       doc.text("Reporte de Estudiantes", 14, 22);
 
-      // Subtítulo
       doc.setFontSize(11);
       doc.setTextColor(100);
       doc.text(`Docente: ${docente?.nombre} ${docente?.apellido}`, 14, 32);
       doc.text(`Fecha: ${new Date().toLocaleDateString("es-ES")}`, 14, 38);
 
-      // Línea separadora
-      doc.setDrawColor(200);
-      doc.line(14, 42, 196, 42);
-
-      // Resumen General
-      doc.setFontSize(14);
-      doc.setTextColor(0);
-      doc.text("Resumen General", 14, 52);
-
       const resumenData = [
         ["Total Estudiantes", resumen.total_estudiantes],
-        ["Lecturas Disponibles", totalLecturas],
         ["Lecturas Realizadas", resumen.total_lecturas],
         ["Actividades Completadas", resumen.actividades_completadas],
       ];
 
       doc.autoTable({
-        startY: 56,
+        startY: 45,
         head: [["Métrica", "Valor"]],
         body: resumenData,
         theme: "grid",
-        headStyles: {
-          fillColor: [37, 99, 235],
-          fontSize: 11,
-          fontStyle: "bold",
-        },
-        styles: { fontSize: 10 },
-        columnStyles: {
-          0: { cellWidth: 100 },
-          1: { cellWidth: 86, halign: "center" },
-        },
+        headStyles: { fillColor: [37, 99, 235] },
       });
-
-      // Lista de Estudiantes
-      const finalY = doc.lastAutoTable.finalY || 56;
-      doc.setFontSize(14);
-      doc.setTextColor(0);
-      doc.text("Lista de Estudiantes", 14, finalY + 15);
 
       const estudiantesData = estudiantesConProgreso.map((e) => [
         `${e.nombre} ${e.apellido}`,
         e.curso_nombre || "—",
-        e.nivel_educativo || "—",
         `Nivel ${e.nivel_gamificacion || 1}`,
         `${e.xp_total || 0} XP`,
-        `${e.racha || 0} días`,
       ]);
 
+      const finalY = doc.lastAutoTable.finalY || 45;
       doc.autoTable({
-        startY: finalY + 20,
-        head: [["Nombre", "Curso", "Nivel Edu.", "Nivel", "XP", "Racha"]],
+        startY: finalY + 10,
+        head: [["Nombre", "Curso", "Nivel", "XP"]],
         body: estudiantesData,
         theme: "striped",
-        headStyles: {
-          fillColor: [37, 99, 235],
-          fontSize: 10,
-          fontStyle: "bold",
-        },
-        styles: { fontSize: 9 },
-        columnStyles: {
-          0: { cellWidth: 45 },
-          1: { cellWidth: 30 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 25, halign: "center" },
-          4: { cellWidth: 28, halign: "center" },
-          5: { cellWidth: 28, halign: "center" },
-        },
+        headStyles: { fillColor: [37, 99, 235] },
       });
-
-      // Pie de página
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(
-          `Página ${i} de ${pageCount}`,
-          doc.internal.pageSize.getWidth() / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: "center" }
-        );
-      }
 
       doc.save(
         `Reporte_${docente?.nombre || "Docente"}_${new Date().toISOString().split("T")[0]}.pdf`
       );
-
-      console.log("✅ PDF generado correctamente");
     } catch (error) {
       console.error("❌ Error exportando a PDF:", error);
-      alert(
-        "Error al exportar a PDF.\n\nAsegúrate de tener instalado:\nnpm install jspdf jspdf-autotable\n\nError: " +
-          error.message
-      );
+      alert("Error al exportar a PDF.");
     }
   };
 
-  if (loading || !resumen) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-xl font-semibold text-blue-700">
-            Cargando información del docente...
-          </p>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Cargando información...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* ============================ SALUDO ============================ */}
-        <div className="bg-white/80 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/40">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                ¡Bienvenido, {docente?.nombre} {docente?.apellido}! 👋
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg">
-                Resumen general de tus estudiantes registrados
-              </p>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        
+        * {
+          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+      `}</style>
+
+      {/* VERSIÓN MÓVIL */}
+      <div className="md:hidden min-h-screen bg-white">
+        {/* Header móvil fijo */}
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 shadow-lg z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <MdDashboard size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-base font-bold text-white mb-0.5">Dashboard</h1>
+                <p className="text-xs text-blue-100">¡Hola, {docente?.nombre}!</p>
+              </div>
             </div>
 
-            {/* Botones de exportación */}
-            <div className="flex gap-3">
+            {/* Botones export móvil */}
+            <div className="flex gap-2">
               <button
                 onClick={exportarExcel}
                 disabled={loadingProgreso}
-                className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 bg-green-600 rounded-lg text-white disabled:opacity-50"
               >
-                <MdTableChart size={20} />
-                Excel
+                <MdTableChart size={16} />
               </button>
               <button
                 onClick={exportarPDF}
                 disabled={loadingProgreso}
-                className="flex items-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 bg-red-600 rounded-lg text-white disabled:opacity-50"
               >
-                <MdPictureAsPdf size={20} />
-                PDF
+                <MdPictureAsPdf size={16} />
               </button>
             </div>
           </div>
         </div>
 
-        {/* ============================ TARJETAS ============================ */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card
-            color="from-blue-500 to-blue-600"
-            icon={<MdPeople size={32} className="text-white" />}
-            titulo="Total Estudiantes"
-            valor={resumen.total_estudiantes}
-          />
+        {/* Contenido móvil */}
+        <main className="pt-24 px-4 pb-8 space-y-4">{/* Reducido de pt-36 a pt-24 */}
+          {/* Cards móvil */}
+          <div className="grid grid-cols-2 gap-3">
+            <MiniCard
+              icon={<MdPeople size={20} />}
+              color="from-blue-500 to-blue-600"
+              titulo="Estudiantes"
+              valor={resumen.total_estudiantes}
+            />
+            <MiniCard
+              icon={<MdLibraryBooks size={20} />}
+              color="from-purple-500 to-purple-600"
+              titulo="Lecturas"
+              valor={resumen.total_lecturas}
+            />
+            <MiniCard
+              icon={<MdCheckCircle size={20} />}
+              color="from-green-500 to-green-600"
+              titulo="Actividades"
+              valor={resumen.actividades_completadas}
+            />
+            <MiniCard
+              icon={<MdAssignment size={20} />}
+              color="from-orange-500 to-orange-600"
+              titulo="Disponibles"
+              valor={totalLecturas}
+            />
+          </div>
 
-          <Card
-            color="from-purple-500 to-purple-600"
-            icon={<MdLibraryBooks size={32} className="text-white" />}
-            titulo="Lecturas Realizadas"
-            valor={resumen.total_lecturas}
-          />
+          {/* Gráficos móvil - solo 2 gráficos */}
+          <div className="space-y-4">
+            <GraficoCard
+              titulo="Estado de Lecturas"
+              icon={<MdLibraryBooks size={18} className="text-green-600" />}
+              datos={datosLecturas}
+              tipo="pie"
+            />
 
-          <Card
-            color="from-green-500 to-green-600"
-            icon={<MdCheckCircle size={32} className="text-white" />}
-            titulo="Actividades Completadas"
-            valor={resumen.actividades_completadas}
-          />
+            <GraficoCard
+              titulo="Top 5 Estudiantes"
+              icon={<MdTrendingUp size={18} className="text-blue-600" />}
+              datos={datosEstudiantes}
+              tipo="bar"
+            />
+          </div>
 
-          <Card
-            color="from-orange-500 to-orange-600"
-            icon={<MdAssignment size={32} className="text-white" />}
-            titulo="Lecturas Disponibles"
-            valor={totalLecturas}
-          />
-        </div>
-
-        {/* ============================ GRÁFICOS ============================ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Gráfico: Estado de Lecturas */}
-          <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-xl border border-white/40">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-green-100 rounded-2xl">
-                <MdLibraryBooks className="text-green-600" size={24} />
+          {/* Tabla móvil */}
+          <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200">
+            <h3 className="text-sm font-bold text-slate-900 mb-3">
+              Estudiantes ({estudiantesConProgreso.length})
+            </h3>
+            
+            {loadingProgreso && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                <p className="text-xs text-blue-700">Cargando progreso...</p>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">
-                  Estado de Lecturas
-                </h3>
-                <p className="text-sm text-gray-600">Completadas vs Pendientes</p>
-              </div>
-            </div>
-            {datosLecturas.every((d) => d.valor === 0) ? (
-              <div className="h-[250px] flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <MdLibraryBooks size={48} className="mx-auto mb-2 text-gray-300" />
-                  <p className="font-medium">No hay datos de lecturas</p>
-                  <p className="text-sm">
-                    Los datos aparecerán cuando se registren lecturas
-                  </p>
-                </div>
+            )}
+
+            {estudiantesConProgreso.length > 0 ? (
+              <div className="space-y-2">
+                {estudiantesConProgreso.map((e) => (
+                  <div key={e.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                    <p className="text-sm font-bold text-slate-900 mb-1">
+                      {e.nombre} {e.apellido}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span className="text-slate-500">Curso:</span>
+                        <p className="font-medium text-slate-700">{e.curso_nombre || "—"}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Nivel:</span>
+                        <p className="font-medium text-indigo-600">Nv. {e.nivel_gamificacion || 1}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">XP:</span>
+                        <p className="font-medium text-purple-600">{e.xp_total || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={datosLecturas}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ nombre, valor, percent }) =>
-                      `${nombre}: ${valor} (${(percent * 100).toFixed(0)}%)`
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="valor"
-                  >
-                    {datosLecturas.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="text-center py-8">
+                <MdPeople size={32} className="text-slate-300 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">No hay estudiantes</p>
+              </div>
             )}
           </div>
+        </main>
+      </div>
 
-          {/* Gráfico: Estado de Actividades */}
-          <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-xl border border-white/40">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-purple-100 rounded-2xl">
-                <MdCheckCircle className="text-purple-600" size={24} />
-              </div>
+      {/* VERSIÓN DESKTOP */}
+      <div className="hidden md:block min-h-screen bg-white pt-6">
+        <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+          {/* Header desktop */}
+          <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-200">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-gray-800">
-                  Estado de Actividades
-                </h3>
-                <p className="text-sm text-gray-600">Completadas vs Pendientes</p>
-              </div>
-            </div>
-            {datosActividades.every((d) => d.valor === 0) ? (
-              <div className="h-[250px] flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <MdCheckCircle size={48} className="mx-auto mb-2 text-gray-300" />
-                  <p className="font-medium">No hay datos de actividades</p>
-                  <p className="text-sm">
-                    Los datos aparecerán cuando se completen actividades
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={datosActividades}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ nombre, valor, percent }) =>
-                      `${nombre}: ${valor} (${(percent * 100).toFixed(0)}%)`
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="valor"
-                  >
-                    {datosActividades.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          {/* Gráfico: Top 5 Estudiantes por XP */}
-          <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-xl border border-white/40">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-blue-100 rounded-2xl">
-                <MdTrendingUp className="text-blue-600" size={24} />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">Top 5 Estudiantes</h3>
-                <p className="text-sm text-gray-600">Por XP acumulado</p>
-              </div>
-            </div>
-            {datosEstudiantes.length === 0 ? (
-              <div className="h-[250px] flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <MdPeople size={48} className="mx-auto mb-2 text-gray-300" />
-                  <p className="font-medium">No hay estudiantes registrados</p>
-                  <p className="text-sm">
-                    Los datos aparecerán cuando se registren estudiantes
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={datosEstudiantes} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis type="number" stroke="#6b7280" />
-                  <YAxis
-                    dataKey="nombre"
-                    type="category"
-                    stroke="#6b7280"
-                    width={80}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      borderRadius: "12px",
-                      border: "1px solid #e5e7eb",
-                    }}
-                  />
-                  <Bar
-                    dataKey="xp"
-                    fill="#3B82F6"
-                    radius={[0, 8, 8, 0]}
-                    name="XP"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* ============================ TABLA ESTUDIANTES ============================ */}
-        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-xl border border-white/40">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">
-                Estudiantes Registrados 📋
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {loadingProgreso
-                  ? "Cargando progreso de estudiantes..."
-                  : `${estudiantesConProgreso.length} estudiantes en total`}
-              </p>
-            </div>
-          </div>
-
-          {loadingProgreso && (
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg mb-4">
-              <div className="flex items-center gap-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                <p className="text-blue-700 font-medium">
-                  Cargando progreso de gamificación de cada estudiante...
+                <h1 className="text-2xl font-bold text-slate-900">
+                  ¡Bienvenido, {docente?.nombre} {docente?.apellido}! 👋
+                </h1>
+                <p className="text-sm text-slate-600">
+                  Resumen general de tus estudiantes registrados
                 </p>
               </div>
-            </div>
-          )}
 
-          {estudiantesConProgreso.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b-2 border-gray-200 bg-gray-50">
-                  <tr>
-                    <th className="py-4 px-4 text-left text-sm font-bold text-gray-700">
-                      Nombre
-                    </th>
-                    <th className="py-4 px-4 text-left text-sm font-bold text-gray-700">
-                      Curso
-                    </th>
-                    <th className="py-4 px-4 text-left text-sm font-bold text-gray-700">
-                      Nivel Edu.
-                    </th>
-                    <th className="py-4 px-4 text-center text-sm font-bold text-gray-700">
-                      Nivel
-                    </th>
-                    <th className="py-4 px-4 text-center text-sm font-bold text-gray-700">
-                      XP Total
-                    </th>
-                    <th className="py-4 px-4 text-center text-sm font-bold text-gray-700">
-                      Racha
-                    </th>
-                    <th className="py-4 px-4 text-center text-sm font-bold text-gray-700">
-                      Estado
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {estudiantesConProgreso.map((e) => (
-                    <tr
-                      key={e.id}
-                      className="border-b border-gray-100 hover:bg-blue-50 transition"
-                    >
-                      <td className="py-4 px-4 font-semibold text-gray-800">
-                        {e.nombre} {e.apellido}
-                      </td>
-                      <td className="py-4 px-4 text-gray-700">
-                        {e.curso_nombre ?? "—"}
-                      </td>
-                      <td className="py-4 px-4 text-gray-700">
-                        {e.nivel_educativo ?? "—"}
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold">
-                          Nivel {e.nivel_gamificacion || 1}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="font-semibold text-purple-600">
-                          {e.xp_total || 0} XP
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold">
-                          🔥 {e.racha || 0} días
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold">
-                          Activo
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MdPeople size={40} className="text-gray-400" />
+              <div className="flex gap-3">
+                <button
+                  onClick={exportarExcel}
+                  disabled={loadingProgreso}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-md transition disabled:opacity-50"
+                >
+                  <MdTableChart size={20} />
+                  Excel
+                </button>
+                <button
+                  onClick={exportarPDF}
+                  disabled={loadingProgreso}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold shadow-md transition disabled:opacity-50"
+                >
+                  <MdPictureAsPdf size={20} />
+                  PDF
+                </button>
               </div>
-              <p className="text-gray-500 text-lg font-medium">
-                No hay estudiantes registrados.
-              </p>
-              <p className="text-gray-400 text-sm mt-1">
-                Los estudiantes aparecerán aquí cuando se registren
-              </p>
             </div>
-          )}
+          </div>
+
+          {/* Cards desktop */}
+          <div className="grid grid-cols-4 gap-5">
+            <Card
+              color="from-blue-500 to-blue-600"
+              icon={<MdPeople size={28} />}
+              titulo="Total Estudiantes"
+              valor={resumen.total_estudiantes}
+            />
+            <Card
+              color="from-purple-500 to-purple-600"
+              icon={<MdLibraryBooks size={28} />}
+              titulo="Lecturas Realizadas"
+              valor={resumen.total_lecturas}
+            />
+            <Card
+              color="from-green-500 to-green-600"
+              icon={<MdCheckCircle size={28} />}
+              titulo="Actividades Completadas"
+              valor={resumen.actividades_completadas}
+            />
+            <Card
+              color="from-orange-500 to-orange-600"
+              icon={<MdAssignment size={28} />}
+              titulo="Lecturas Disponibles"
+              valor={totalLecturas}
+            />
+          </div>
+
+          {/* Gráficos desktop - solo 2 gráficos */}
+          <div className="grid lg:grid-cols-2 gap-5">
+            <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <MdLibraryBooks className="text-green-600" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Estado de Lecturas</h3>
+                  <p className="text-xs text-slate-500">Completadas vs Pendientes</p>
+                </div>
+              </div>
+              {datosLecturas.every((d) => d.valor === 0) ? (
+                <div className="h-[220px] flex items-center justify-center text-slate-400">
+                  <div className="text-center">
+                    <MdLibraryBooks size={40} className="mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm">No hay datos</p>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={datosLecturas}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ nombre, valor }) => `${nombre}: ${valor}`}
+                      outerRadius={70}
+                      dataKey="valor"
+                    >
+                      {datosLecturas.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <MdTrendingUp className="text-blue-600" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Top 5 Estudiantes</h3>
+                  <p className="text-xs text-slate-500">Por XP acumulado</p>
+                </div>
+              </div>
+              {datosEstudiantes.length === 0 ? (
+                <div className="h-[220px] flex items-center justify-center text-slate-400">
+                  <div className="text-center">
+                    <MdPeople size={40} className="mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm">No hay estudiantes</p>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={datosEstudiantes} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="nombre" type="category" width={70} />
+                    <Tooltip />
+                    <Bar dataKey="xp" fill="#3B82F6" radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* Tabla desktop */}
+          <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-200">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">
+              Estudiantes Registrados ({estudiantesConProgreso.length})
+            </h2>
+
+            {loadingProgreso && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-blue-700">Cargando progreso...</p>
+              </div>
+            )}
+
+            {estudiantesConProgreso.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-4 text-left text-sm font-bold text-slate-700">Nombre</th>
+                      <th className="py-3 px-4 text-left text-sm font-bold text-slate-700">Curso</th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">Nivel</th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">XP Total</th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">Racha</th>
+                      <th className="py-3 px-4 text-center text-sm font-bold text-slate-700">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {estudiantesConProgreso.map((e) => (
+                      <tr key={e.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                        <td className="py-3 px-4 font-semibold text-slate-900">
+                          {e.nombre} {e.apellido}
+                        </td>
+                        <td className="py-3 px-4 text-slate-700">{e.curso_nombre || "—"}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
+                            Nv. {e.nivel_gamificacion || 1}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-semibold text-purple-600">
+                          {e.xp_total || 0} XP
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                            🔥 {e.racha || 0}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                            Activo
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <MdPeople size={48} className="text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500">No hay estudiantes registrados</p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </>
+  );
+}
+
+// Componente Card Desktop
+function Card({ color, icon, titulo, valor }) {
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-4 border border-slate-200 hover:shadow-xl transition-shadow">
+      <div className="flex gap-3 items-center">
+        <div className={`p-3 rounded-lg bg-gradient-to-br ${color} text-white`}>
+          {icon}
+        </div>
+        <div>
+          <p className="text-xs text-slate-600 font-semibold mb-1">{titulo}</p>
+          <p className="text-2xl font-bold text-slate-900">{valor}</p>
         </div>
       </div>
     </div>
   );
 }
 
-/* ----------------------------------------
-    COMPONENTE CARD MEJORADO
----------------------------------------- */
-function Card({ color, icon, titulo, valor }) {
+// Componente MiniCard Móvil
+function MiniCard({ icon, color, titulo, valor }) {
   return (
-    <div className="bg-white/80 backdrop-blur-lg p-6 shadow-xl rounded-3xl border border-white/40 transform hover:scale-105 transition-all duration-300">
-      <div className="flex gap-4 items-center">
-        <div className={`p-4 rounded-2xl bg-gradient-to-br ${color} shadow-lg`}>
-          {icon}
-        </div>
-        <div>
-          <p className="text-gray-600 text-sm font-semibold mb-1">{titulo}</p>
-          <p className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            {valor}
-          </p>
-        </div>
+    <div className="bg-white rounded-lg shadow-md p-3 border border-slate-200">
+      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${color} text-white flex items-center justify-center mb-2`}>
+        {icon}
       </div>
+      <p className="text-xs text-slate-600 font-semibold mb-1">{titulo}</p>
+      <p className="text-xl font-bold text-slate-900">{valor}</p>
+    </div>
+  );
+}
+
+// Componente GraficoCard Móvil
+function GraficoCard({ titulo, icon, datos, tipo }) {
+  const sinDatos = Array.isArray(datos) ? datos.every(d => d.valor === 0 || !d.xp) : true;
+
+  return (
+    <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="p-2 bg-slate-100 rounded-lg">{icon}</div>
+        <h3 className="text-sm font-bold text-slate-900">{titulo}</h3>
+      </div>
+      
+      {sinDatos ? (
+        <div className="h-[180px] flex items-center justify-center text-slate-400">
+          <p className="text-xs">No hay datos</p>
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={180}>
+          {tipo === "pie" ? (
+            <PieChart>
+              <Pie
+                data={datos}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ nombre, valor }) => `${nombre}: ${valor}`}
+                outerRadius={60}
+                dataKey="valor"
+              >
+                {datos.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          ) : (
+            <BarChart data={datos} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis dataKey="nombre" type="category" width={60} style={{ fontSize: 10 }} />
+              <Tooltip />
+              <Bar dataKey="xp" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          )}
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

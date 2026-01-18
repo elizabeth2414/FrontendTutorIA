@@ -59,7 +59,7 @@ export default function Home() {
                 
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-100">
                   <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                  <span className="text-sm font-semibold text-blue-700">Aprendizaje con IA</span>
+                  <span className="text-sm font-semibold text-blue-700">BookieSmartIA</span>
                 </div>
 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-slate-900 leading-[1.1] tracking-tight">
@@ -70,7 +70,7 @@ export default function Home() {
                 </h1>
                 
                 <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl">
-                  <span className="font-semibold text-blue-600">ReadSmartIA</span> transforma el aprendizaje de la lectura con retroalimentación automática, ejercicios interactivos y seguimiento personalizado.
+                  <span className="font-semibold text-blue-600">BookieSmartIA</span> transforma el aprendizaje de la lectura con retroalimentación automática, ejercicios interactivos y seguimiento personalizado.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">

@@ -1,5 +1,3 @@
-// src/services/docentesService.js
-
 import axiosClient from "../api/axiosClient";
 import Logger from "../logs/logger";
 
@@ -46,9 +44,14 @@ export const crearEstudianteDocente = async (payload) => {
     throw error;
   }
 };
+
+// =======================================================
+// 4. OBTENER UN ESTUDIANTE POR ID
+// =======================================================
 export const obtenerEstudianteDocente = async (id) => {
   try {
-    const res = await axiosClient.get(`/docentes/estudiantes/${id}`);
+    const res = await axiosClient.get(`${BASE}/estudiantes/${id}`);
+    Logger.api("GET /docentes/estudiantes/:id", res.data);
     return res.data;
   } catch (error) {
     Logger.error("Error obteniendo estudiante por ID", error);
@@ -56,17 +59,36 @@ export const obtenerEstudianteDocente = async (id) => {
   }
 };
 
+// =======================================================
+// 5. ACTUALIZAR ESTUDIANTE ✅ CORRECTO CON PUT
+// =======================================================
 export const actualizarEstudianteDocente = async (id, payload) => {
-  const res = await axiosClient.put(`/docentes/estudiantes/${id}`, payload);
-  return res.data;
-};
-export const eliminarEstudianteDocente = async (id) => {
-  const res = await axiosClient.delete(`/docentes/estudiantes/${id}`);
-  return res.data;
+  try {
+    const res = await axiosClient.put(`${BASE}/estudiantes/${id}`, payload);
+    Logger.api("PUT /docentes/estudiantes/:id", res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error actualizando estudiante", error);
+    throw error;
+  }
 };
 
 // =======================================================
-// 4. DASHBOARD RESUMEN
+// 6. ELIMINAR ESTUDIANTE
+// =======================================================
+export const eliminarEstudianteDocente = async (id) => {
+  try {
+    const res = await axiosClient.delete(`${BASE}/estudiantes/${id}`);
+    Logger.api("DELETE /docentes/estudiantes/:id", res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error eliminando estudiante", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 7. DASHBOARD RESUMEN
 // =======================================================
 export const getResumenDashboard = async () => {
   try {
@@ -80,7 +102,7 @@ export const getResumenDashboard = async () => {
 };
 
 // =======================================================
-// 5. DASHBOARD PROGRESO MENSUAL
+// 8. DASHBOARD PROGRESO MENSUAL
 // =======================================================
 export const getProgresoMensual = async () => {
   try {
@@ -94,7 +116,7 @@ export const getProgresoMensual = async () => {
 };
 
 // =======================================================
-// 6. DASHBOARD RENDIMIENTO CURSOS
+// 9. DASHBOARD RENDIMIENTO CURSOS
 // =======================================================
 export const getRendimientoCursos = async () => {
   try {
@@ -108,7 +130,7 @@ export const getRendimientoCursos = async () => {
 };
 
 // =======================================================
-// 7. NIVELES DE ESTUDIANTES
+// 10. NIVELES DE ESTUDIANTES
 // =======================================================
 export const getNiveles = async () => {
   try {

@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { obtenerPerfilPadre, actualizarPerfilPadre } from "../../services/padresService";
+import {
+  MdArrowBack,
+  MdPerson,
+  MdEmail,
+  MdPhone,
+  MdLock,
+  MdVisibility,
+  MdVisibilityOff,
+  MdEdit,
+} from "react-icons/md";
 
 const EditarCuentaPadre = () => {
   const navigate = useNavigate();
 
-  // Estado del formulario
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
@@ -38,14 +47,12 @@ const EditarCuentaPadre = () => {
     passwordConfirmar: "",
   });
 
-  // Cargar datos del padre al montar el componente
   useEffect(() => {
     cargarDatosPadre();
   }, []);
 
   const cargarDatosPadre = async () => {
     try {
-      // Obtener perfil del padre actual (no necesita ID)
       const datos = await obtenerPerfilPadre();
       
       setForm({
@@ -65,7 +72,6 @@ const EditarCuentaPadre = () => {
     }
   };
 
-  // Validación de campos
   const validateField = (name, value) => {
     let msg = "";
     const soloLetras = /^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/;
@@ -103,14 +109,12 @@ const EditarCuentaPadre = () => {
     setErrors((prev) => ({ ...prev, [name]: msg }));
   };
 
-  // Manejar cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
     validateField(name, value);
   };
 
-  // Guardar cambios
   const handleGuardar = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -118,7 +122,6 @@ const EditarCuentaPadre = () => {
     setSuccessMsg("");
 
     try {
-      // Preparar datos a actualizar
       const dataActualizar = {
         nombre: form.nombre,
         apellido: form.apellido,
@@ -126,7 +129,6 @@ const EditarCuentaPadre = () => {
         telefono_contacto: form.telefono_contacto || null,
       };
 
-      // Si el usuario quiere cambiar la contraseña
       if (cambiarPassword && form.passwordNueva) {
         if (!form.passwordActual) {
           setErrorMsg("Debes ingresar tu contraseña actual.");
@@ -142,10 +144,8 @@ const EditarCuentaPadre = () => {
         dataActualizar.password = form.passwordNueva;
       }
 
-      // Actualizar en el backend
       const datosActualizados = await actualizarPerfilPadre(dataActualizar);
 
-      // Actualizar localStorage con los nuevos datos
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const updatedUser = { 
         ...user, 
@@ -157,7 +157,6 @@ const EditarCuentaPadre = () => {
 
       setSuccessMsg("✅ Datos actualizados correctamente.");
       
-      // Limpiar campos de contraseña
       setForm({
         ...form,
         passwordActual: "",
@@ -171,15 +170,12 @@ const EditarCuentaPadre = () => {
       }, 3000);
     } catch (error) {
       console.error("Error al guardar:", error);
-      
-      // El error ya viene procesado desde el servicio
       setErrorMsg(error.message || "No se pudo actualizar la cuenta. Intenta de nuevo.");
     } finally {
       setSaving(false);
     }
   };
 
-  // Verificar si hay errores o campos vacíos
   const formInvalido =
     Object.values(errors).some((e) => e !== "") ||
     !form.nombre ||
@@ -187,10 +183,9 @@ const EditarCuentaPadre = () => {
     !form.email ||
     (cambiarPassword && (!form.passwordActual || !form.passwordNueva || !form.passwordConfirmar));
 
-  // Campo de input reutilizable
-  const InputField = ({ label, name, type = "text", placeholder, icon, value, showToggle = false }) => (
+  const InputField = ({ label, name, type = "text", placeholder, icon: Icon, value, showToggle = false, mobile = false }) => (
     <div>
-      <label className="text-gray-700 font-semibold text-sm block mb-2">
+      <label className={`text-slate-700 font-semibold block mb-2 ${mobile ? 'text-xs' : 'text-sm'}`}>
         {label}
       </label>
       <div className="relative">
@@ -200,15 +195,17 @@ const EditarCuentaPadre = () => {
           value={value}
           onChange={handleChange}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 ${icon ? 'pl-11' : ''} rounded-2xl border-2 bg-gray-50 outline-none transition-all text-base ${
+          className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 rounded-lg border-2 bg-white outline-none transition-all ${
+            mobile ? 'py-2.5 text-sm' : 'py-3 text-base'
+          } ${
             errors[name]
               ? "border-red-400 focus:border-red-500"
-              : "border-gray-200 focus:border-blue-400 focus:bg-white"
+              : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           }`}
         />
-        {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-            {icon}
+        {Icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <Icon size={mobile ? 18 : 20} />
           </div>
         )}
         {showToggle && (
@@ -217,17 +214,12 @@ const EditarCuentaPadre = () => {
             onClick={() =>
               setShowPasswords({ ...showPasswords, [name]: !showPasswords[name] })
             }
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
           >
             {showPasswords[name] ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
+              <MdVisibility size={mobile ? 18 : 20} />
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-              </svg>
+              <MdVisibilityOff size={mobile ? 18 : 20} />
             )}
           </button>
         )}
@@ -240,75 +232,87 @@ const EditarCuentaPadre = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Cargando datos...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Cargando datos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-6">
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        
+        * {
+          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+      `}</style>
+
+      {/* VERSIÓN MÓVIL */}
+      <div className="md:hidden min-h-screen bg-white">
+        {/* Header móvil fijo */}
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 shadow-lg z-30">
           <button
             onClick={() => navigate(-1)}
-            className="p-3 bg-white rounded-2xl shadow-lg hover:shadow-xl transition"
+            className="flex items-center gap-2 text-white/90 hover:text-white mb-3 transition-colors"
           >
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <MdArrowBack size={16} />
+            <span className="font-medium text-xs">Volver</span>
           </button>
-          <div>
-            <h1 className="text-3xl font-bold text-blue-700">✏️ Editar Cuenta</h1>
-            <p className="text-gray-600 text-sm">Actualiza tu información personal</p>
+          
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <MdEdit size={20} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-white mb-0.5">Editar Cuenta</h1>
+              <p className="text-xs text-blue-100">Actualiza tu información</p>
+            </div>
           </div>
         </div>
 
-        {/* Formulario */}
-        <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/40">
+        {/* Contenido móvil */}
+        <main className="pt-32 px-4 pb-8">
+          {/* Mensajes */}
           {errorMsg && (
-            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 rounded-xl mb-6 flex items-start">
-              <svg className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span>{errorMsg}</span>
+            <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded-lg mb-4">
+              <p className="text-sm text-red-700">{errorMsg}</p>
             </div>
           )}
 
           {successMsg && (
-            <div className="bg-green-50 border-l-4 border-green-400 text-green-700 p-4 rounded-xl mb-6 flex items-start">
-              <svg className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>{successMsg}</span>
+            <div className="bg-green-50 border-l-4 border-green-400 p-3 rounded-lg mb-4">
+              <p className="text-sm text-green-700">{successMsg}</p>
             </div>
           )}
 
-          <form onSubmit={handleGuardar} className="space-y-6">
-            {/* Información Personal */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Información Personal
-              </h3>
+          <form onSubmit={handleGuardar} className="space-y-4">
+            {/* Información Personal móvil */}
+            <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <MdPerson size={18} />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900">
+                  Información Personal
+                </h2>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
                 <InputField
                   label="Nombre"
                   name="nombre"
                   value={form.nombre}
                   placeholder="Tu nombre"
-                  icon={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  }
+                  icon={MdPerson}
+                  mobile
                 />
 
                 <InputField
@@ -316,50 +320,43 @@ const EditarCuentaPadre = () => {
                   name="apellido"
                   value={form.apellido}
                   placeholder="Tu apellido"
-                  icon={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  }
+                  icon={MdPerson}
+                  mobile
+                />
+
+                <InputField
+                  label="Correo Electrónico"
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  placeholder="correo@ejemplo.com"
+                  icon={MdEmail}
+                  mobile
+                />
+
+                <InputField
+                  label="Teléfono (Opcional)"
+                  name="telefono_contacto"
+                  type="tel"
+                  value={form.telefono_contacto}
+                  placeholder="+593 99 999 9999"
+                  icon={MdPhone}
+                  mobile
                 />
               </div>
-
-              <InputField
-                label="Correo Electrónico"
-                name="email"
-                type="email"
-                value={form.email}
-                placeholder="correo@ejemplo.com"
-                icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                }
-              />
-
-              <InputField
-                label="Teléfono de Contacto (Opcional)"
-                name="telefono_contacto"
-                type="tel"
-                value={form.telefono_contacto}
-                placeholder="+593 99 999 9999"
-                icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                }
-              />
             </div>
 
-            {/* Cambiar Contraseña */}
-            <div className="border-t pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  Seguridad
-                </h3>
+            {/* Seguridad móvil */}
+            <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                    <MdLock size={18} />
+                  </div>
+                  <h2 className="text-sm font-bold text-slate-900">
+                    Seguridad
+                  </h2>
+                </div>
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -367,22 +364,20 @@ const EditarCuentaPadre = () => {
                     onChange={(e) => setCambiarPassword(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="relative w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                  <span className="ml-3 text-sm font-medium text-gray-700">
-                    Cambiar contraseña
-                  </span>
+                  <div className="relative w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
                 </label>
               </div>
 
               {cambiarPassword && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <InputField
                     label="Contraseña Actual"
                     name="passwordActual"
                     type="password"
                     value={form.passwordActual}
-                    placeholder="Ingresa tu contraseña actual"
+                    placeholder="Tu contraseña actual"
                     showToggle={true}
+                    mobile
                   />
 
                   <InputField
@@ -392,70 +387,245 @@ const EditarCuentaPadre = () => {
                     value={form.passwordNueva}
                     placeholder="Mínimo 6 caracteres"
                     showToggle={true}
+                    mobile
                   />
 
                   <InputField
-                    label="Confirmar Nueva Contraseña"
+                    label="Confirmar Contraseña"
                     name="passwordConfirmar"
                     type="password"
                     value={form.passwordConfirmar}
-                    placeholder="Repite tu nueva contraseña"
+                    placeholder="Repite tu contraseña"
                     showToggle={true}
+                    mobile
                   />
                 </div>
               )}
             </div>
 
-            {/* Botones */}
-            <div className="flex gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="flex-1 py-3 px-6 rounded-2xl border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
-              >
-                Cancelar
-              </button>
+            {/* Botones móvil */}
+            <div className="flex flex-col gap-3 pt-2">
               <button
                 type="submit"
                 disabled={saving || formInvalido}
-                className={`flex-1 py-3 px-6 rounded-2xl text-white font-bold text-lg shadow-xl transition-all ${
+                className={`w-full py-3 rounded-lg text-white font-bold shadow-md transition-all ${
                   saving || formInvalido
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 active:scale-95"
+                    ? "bg-slate-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 active:scale-95"
                 }`}
               >
-                {saving ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Guardando...
-                  </span>
-                ) : (
-                  "💾 Guardar Cambios"
-                )}
+                {saving ? "Guardando..." : "💾 Guardar Cambios"}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="w-full py-3 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition"
+              >
+                Cancelar
               </button>
             </div>
-          </form>
-        </div>
 
-        {/* Info adicional */}
-        <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-xl">
-          <div className="flex items-start">
-            <svg className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="text-sm text-blue-800 font-semibold">💡 Consejo de seguridad</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Te recomendamos cambiar tu contraseña cada 3 meses y usar una combinación de letras, números y símbolos.
+            {/* Info móvil */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-800">
+                💡 <strong>Consejo:</strong> Usa contraseñas seguras con letras, números y símbolos.
               </p>
             </div>
-          </div>
-        </div>
+          </form>
+        </main>
       </div>
-    </div>
+
+      {/* VERSIÓN DESKTOP */}
+      <div className="hidden md:block min-h-screen bg-white pt-6">
+        <main className="max-w-3xl mx-auto px-6 py-6">
+          {/* Header desktop */}
+          <div className="mb-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition text-sm mb-4"
+            >
+              <MdArrowBack size={18} />
+              Volver
+            </button>
+
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+                <MdEdit size={28} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 mb-1">
+                  Editar Cuenta
+                </h1>
+                <p className="text-sm text-slate-600">
+                  Actualiza tu información personal
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Formulario desktop */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+            {/* Mensajes */}
+            {errorMsg && (
+              <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg mb-6">
+                <p className="text-sm text-red-700">{errorMsg}</p>
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-lg mb-6">
+                <p className="text-sm text-green-700">{successMsg}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleGuardar} className="space-y-6">
+              {/* Información Personal desktop */}
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <MdPerson size={22} />
+                  </div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Información Personal
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <InputField
+                    label="Nombre"
+                    name="nombre"
+                    value={form.nombre}
+                    placeholder="Tu nombre"
+                    icon={MdPerson}
+                  />
+
+                  <InputField
+                    label="Apellido"
+                    name="apellido"
+                    value={form.apellido}
+                    placeholder="Tu apellido"
+                    icon={MdPerson}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <InputField
+                    label="Correo Electrónico"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    placeholder="correo@ejemplo.com"
+                    icon={MdEmail}
+                  />
+
+                  <InputField
+                    label="Teléfono de Contacto (Opcional)"
+                    name="telefono_contacto"
+                    type="tel"
+                    value={form.telefono_contacto}
+                    placeholder="+593 99 999 9999"
+                    icon={MdPhone}
+                  />
+                </div>
+              </div>
+
+              {/* Seguridad desktop */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                      <MdLock size={22} />
+                    </div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      Seguridad
+                    </h2>
+                  </div>
+                  <label className="flex items-center cursor-pointer gap-3">
+                    <span className="text-sm font-medium text-slate-700">
+                      Cambiar contraseña
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={cambiarPassword}
+                      onChange={(e) => setCambiarPassword(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  </label>
+                </div>
+
+                {cambiarPassword && (
+                  <div className="space-y-4">
+                    <InputField
+                      label="Contraseña Actual"
+                      name="passwordActual"
+                      type="password"
+                      value={form.passwordActual}
+                      placeholder="Ingresa tu contraseña actual"
+                      showToggle={true}
+                    />
+
+                    <InputField
+                      label="Nueva Contraseña"
+                      name="passwordNueva"
+                      type="password"
+                      value={form.passwordNueva}
+                      placeholder="Mínimo 6 caracteres"
+                      showToggle={true}
+                    />
+
+                    <InputField
+                      label="Confirmar Nueva Contraseña"
+                      name="passwordConfirmar"
+                      type="password"
+                      value={form.passwordConfirmar}
+                      placeholder="Repite tu nueva contraseña"
+                      showToggle={true}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Botones desktop */}
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="flex-1 py-3 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || formInvalido}
+                  className={`flex-1 py-3 rounded-lg text-white font-bold shadow-lg transition-all ${
+                    saving || formInvalido
+                      ? "bg-slate-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-xl"
+                  }`}
+                >
+                  {saving ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      Guardando...
+                    </span>
+                  ) : (
+                    "💾 Guardar Cambios"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Info desktop */}
+          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm text-blue-800">
+              💡 <strong>Consejo de seguridad:</strong> Te recomendamos cambiar tu contraseña cada 3 meses y usar una combinación de letras, números y símbolos.
+            </p>
+          </div>
+        </main>
+      </div>
+    </>
   );
 };
 
