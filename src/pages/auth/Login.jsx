@@ -16,6 +16,7 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [errorType, setErrorType] = useState(""); // 'error', 'warning', 'info'
   const [showPassword, setShowPassword] = useState(false);
   const [showSplash, setShowSplash] = useState(isMobile);
 
@@ -68,15 +69,18 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setErrorType("");
 
     // Validar antes de enviar
     if (!form.email.trim() || !form.password.trim()) {
       setErrorMsg("Por favor completa todos los campos.");
+      setErrorType("error");
       return;
     }
 
     if (errors.email || errors.password) {
       setErrorMsg("Por favor corrige los errores antes de continuar.");
+      setErrorType("error");
       return;
     }
 
@@ -98,26 +102,122 @@ export default function Login() {
       else navigate("/");
     } catch (error) {
       const status = error?.response?.status;
+      const message = error?.response?.data?.detail || "";
+      
       console.error("❌ LOGIN ERROR:", error);
 
-      if (status === 401) {
-        setErrorMsg("Correo o contraseña incorrectos.");
-      } else if (status === 422) {
-        setErrorMsg("Datos inválidos enviados al servidor.");
-      } else {
-        setErrorMsg("Error al conectar con el servidor.");
+      // ✅ VALIDACIÓN 1: Usuario inactivo (403)
+      if (status === 403 && message.toLowerCase().includes("inactiva")) {
+        setErrorMsg("Tu cuenta está temporalmente inactiva. Por favor contacta al administrador para reactivarla.");
+        setErrorType("warning");
+      }
+      // ✅ VALIDACIÓN 2: Usuario eliminado/deshabilitado (403)
+      else if (status === 403 && (message.toLowerCase().includes("deshabilitada") || message.toLowerCase().includes("eliminado"))) {
+        setErrorMsg("Tu cuenta ha sido deshabilitada. Si crees que esto es un error, contacta al administrador.");
+        setErrorType("warning");
+      }
+      // ✅ VALIDACIÓN 3: Usuario bloqueado (403)
+      else if (status === 403 && message.toLowerCase().includes("bloqueada")) {
+        setErrorMsg("Tu cuenta está bloqueada por seguridad. Contacta al administrador para desbloquearla.");
+        setErrorType("warning");
+      }
+      // ✅ VALIDACIÓN 4: Email no verificado (403)
+      else if (status === 403 && message.toLowerCase().includes("verifica")) {
+        setErrorMsg("Por favor verifica tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.");
+        setErrorType("info");
+      }
+      // ✅ VALIDACIÓN 5: Docente específico (403)
+      else if (status === 403 && message.toLowerCase().includes("docente")) {
+        setErrorMsg("Tu cuenta de docente está deshabilitada. Contacta al administrador del sistema.");
+        setErrorType("warning");
+      }
+      // ✅ VALIDACIÓN 6: Credenciales incorrectas (401)
+      else if (status === 401) {
+        setErrorMsg("Correo o contraseña incorrectos. Verifica tus datos e intenta nuevamente.");
+        setErrorType("error");
+      }
+      // ✅ VALIDACIÓN 7: Datos inválidos (422)
+      else if (status === 422) {
+        setErrorMsg("Los datos enviados no son válidos. Por favor revisa el formulario.");
+        setErrorType("error");
+      }
+      // ✅ VALIDACIÓN 8: Otros errores 403
+      else if (status === 403) {
+        setErrorMsg(message || "Acceso denegado. Contacta al administrador si el problema persiste.");
+        setErrorType("warning");
+      }
+      // ✅ ERROR GENÉRICO
+      else {
+        setErrorMsg("Error al conectar con el servidor. Verifica tu conexión e intenta nuevamente.");
+        setErrorType("error");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // 🎬 SPLASH SCREEN MÓVIL - Diseño mejorado
+  // Componente de alerta mejorado
+  const AlertMessage = ({ message, type }) => {
+    const styles = {
+      error: {
+        bg: "bg-red-50",
+        border: "border-red-500",
+        text: "text-red-700",
+        icon: (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+        ),
+      },
+      warning: {
+        bg: "bg-amber-50",
+        border: "border-amber-500",
+        text: "text-amber-800",
+        icon: (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
+          </svg>
+        ),
+      },
+      info: {
+        bg: "bg-blue-50",
+        border: "border-blue-500",
+        text: "text-blue-800",
+        icon: (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clipRule="evenodd"
+            />
+          </svg>
+        ),
+      },
+    };
+
+    const style = styles[type] || styles.error;
+
+    return (
+      <div className={`${style.bg} border-l-4 ${style.border} ${style.text} p-4 rounded-xl mb-5 flex items-start text-sm shadow-sm`}>
+        <div className="flex-shrink-0 mt-0.5 mr-3">
+          {style.icon}
+        </div>
+        <span style={{fontFamily: 'Poppins, sans-serif'}}>{message}</span>
+      </div>
+    );
+  };
+
+  // 🎬 SPLASH SCREEN MÓVIL - Diseño mejorado con colores suaves
   if (isMobile && showSplash) {
     return (
       <>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Fredoka:wght@600;700&display=swap');
           
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
@@ -157,57 +257,44 @@ export default function Login() {
           .animate-zoomIn { animation: zoomIn 0.6s ease-out; }
         `}</style>
 
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center relative overflow-hidden">
-          {/* Decoración de fondo mejorada */}
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center relative overflow-hidden">
           <div className="absolute inset-0">
-            <div className="absolute top-10 left-10 w-64 h-64 bg-blue-200/30 rounded-full blur-3xl animate-float"></div>
-            <div className="absolute bottom-20 right-10 w-80 h-80 bg-purple-200/30 rounded-full blur-3xl animate-float-delayed"></div>
-            <div className="absolute top-1/2 left-1/4 w-48 h-48 bg-indigo-200/30 rounded-full blur-3xl animate-float-slow"></div>
+            <div className="absolute top-10 left-10 w-64 h-64 bg-emerald-200/30 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-20 right-10 w-80 h-80 bg-teal-200/30 rounded-full blur-3xl animate-float-delayed"></div>
+            <div className="absolute top-1/2 left-1/4 w-48 h-48 bg-cyan-200/30 rounded-full blur-3xl animate-float-slow"></div>
           </div>
 
-          {/* Contenido */}
           <div className="text-center animate-zoomIn z-10 px-6">
-            <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-blue-500/30 animate-bounceCustom">
-              <svg
-                className="w-16 h-16 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
+            <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-500/20 animate-bounceCustom">
+              <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                 />
               </svg>
             </div>
-            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 mb-4 tracking-tight" style={{fontFamily: 'Poppins, sans-serif'}}>
-              ReadSmartIA
+            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 mb-4 tracking-tight" style={{fontFamily: 'Fredoka, Poppins, sans-serif'}}>
+              BookiSmartIA
             </h1>
-            <p className="text-slate-600 text-lg mb-12 px-4" style={{fontFamily: 'DM Sans, sans-serif'}}>
+            <p className="text-slate-600 text-lg mb-12 px-4" style={{fontFamily: 'Poppins, sans-serif'}}>
               Transformando el aprendizaje de la lectura
             </p>
-            
-            {/* Loader mejorado */}
-            <div className="w-14 h-14 mx-auto border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="w-14 h-14 mx-auto border-4 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></div>
           </div>
 
-          {/* Footer info */}
-          <div className="absolute bottom-8 left-0 right-0 text-center text-slate-400 text-sm" style={{fontFamily: 'DM Sans, sans-serif'}}>
-            v1.0.0 • © 2025 ReadSmartIA
+          <div className="absolute bottom-8 left-0 right-0 text-center text-slate-400 text-sm" style={{fontFamily: 'Poppins, sans-serif'}}>
+            v1.0.0 • © 2025 BookiSmartIA
           </div>
         </div>
       </>
     );
   }
 
-  // 📱 DISEÑO MÓVIL - Mejorado
+  // 📱 DISEÑO MÓVIL con colores suaves
   if (isMobile) {
     return (
       <>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
           
           @keyframes fadeIn {
             from { opacity: 0; }
@@ -215,14 +302,8 @@ export default function Login() {
           }
           
           @keyframes slideUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
           }
           
           .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
@@ -230,62 +311,36 @@ export default function Login() {
           .safe-area { padding-bottom: env(safe-area-inset-bottom); }
         `}</style>
 
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col relative overflow-hidden">
-          {/* Decoración de fondo */}
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col relative overflow-hidden">
           <div className="absolute inset-0 opacity-40">
-            <div className="absolute top-10 left-10 w-48 h-48 bg-blue-200/40 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-20 right-10 w-64 h-64 bg-purple-200/40 rounded-full blur-3xl"></div>
+            <div className="absolute top-10 left-10 w-48 h-48 bg-emerald-200/40 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 right-10 w-64 h-64 bg-teal-200/40 rounded-full blur-3xl"></div>
           </div>
 
           <div className="flex-1 flex flex-col justify-center px-6 py-8 relative z-10 safe-area">
-            {/* Logo y título */}
             <div className="text-center mb-10 animate-fadeIn">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-blue-500/30">
-                <svg
-                  className="w-12 h-12 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-500/20">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                   />
                 </svg>
               </div>
-              <h2 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight" style={{fontFamily: 'Poppins, sans-serif'}}>
+              <h2 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight" style={{fontFamily: 'Fredoka, Poppins, sans-serif'}}>
                 ¡Bienvenido!
               </h2>
-              <p className="text-slate-600 text-base" style={{fontFamily: 'DM Sans, sans-serif'}}>
+              <p className="text-slate-600 text-base" style={{fontFamily: 'Poppins, sans-serif'}}>
                 Inicia sesión para continuar
               </p>
             </div>
 
-            {/* Formulario */}
             <div className="bg-white/90 backdrop-blur-xl p-7 rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-white/60 animate-slideUp">
-              {errorMsg && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl mb-5 flex items-start text-sm shadow-sm">
-                  <svg
-                    className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span style={{fontFamily: 'DM Sans, sans-serif'}}>{errorMsg}</span>
-                </div>
-              )}
+              {errorMsg && <AlertMessage message={errorMsg} type={errorType || "error"} />}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'DM Sans, sans-serif'}}>
+                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'Poppins, sans-serif'}}>
                     Correo electrónico
                   </label>
                   <div className="relative">
@@ -300,32 +355,24 @@ export default function Login() {
                       className={`w-full px-4 py-4 pl-12 rounded-2xl border-2 bg-slate-50 focus:bg-white outline-none transition-all text-base ${
                         errors.email
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                          : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                          : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                       }`}
-                      style={{fontFamily: 'DM Sans, sans-serif'}}
+                      style={{fontFamily: 'Poppins, sans-serif'}}
                     />
-                    <svg
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
                       />
                     </svg>
                   </div>
                   {errors.email && (
-                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'DM Sans, sans-serif'}}>{errors.email}</p>
+                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'Poppins, sans-serif'}}>{errors.email}</p>
                   )}
                 </div>
 
                 {/* Contraseña */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'DM Sans, sans-serif'}}>
+                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'Poppins, sans-serif'}}>
                     Contraseña
                   </label>
                   <div className="relative">
@@ -340,9 +387,9 @@ export default function Login() {
                       className={`w-full px-4 py-4 rounded-2xl border-2 bg-slate-50 focus:bg-white outline-none transition-all text-base pr-12 ${
                         errors.password
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                          : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
+                          : "border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
                       }`}
-                      style={{fontFamily: 'DM Sans, sans-serif'}}
+                      style={{fontFamily: 'Poppins, sans-serif'}}
                     />
                     <button
                       type="button"
@@ -362,57 +409,43 @@ export default function Login() {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'DM Sans, sans-serif'}}>{errors.password}</p>
+                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'Poppins, sans-serif'}}>{errors.password}</p>
                   )}
+                </div>
+
+                {/* Link Recuperar contraseña (MÓVIL) */}
+                <div className="flex justify-end -mt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
+                    className="text-sm font-semibold text-teal-600 hover:text-teal-700 hover:underline transition"
+                    style={{fontFamily: 'Poppins, sans-serif'}}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
                 </div>
 
                 {/* Botón Login */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full py-4 rounded-2xl text-white font-bold text-lg shadow-xl transition-all mt-6 ${
+                  className={`w-full py-4 rounded-2xl text-white font-bold text-lg shadow-xl transition-all mt-2 ${
                     loading
                       ? "bg-slate-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 shadow-blue-500/30"
+                      : "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-700 active:scale-95 shadow-emerald-500/20"
                   }`}
-                  style={{fontFamily: 'Poppins, sans-serif'}}
+                  style={{fontFamily: 'Fredoka, Poppins, sans-serif'}}
                 >
-                  {loading ? (
-                    <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Ingresando...
-                    </span>
-                  ) : (
-                    "Iniciar Sesión"
-                  )}
+                  {loading ? "Ingresando..." : "Iniciar Sesión"}
                 </button>
               </form>
 
               <div className="mt-6 text-center">
-                <p className="text-slate-600 text-sm" style={{fontFamily: 'DM Sans, sans-serif'}}>
+                <p className="text-slate-600 text-sm" style={{fontFamily: 'Poppins, sans-serif'}}>
                   ¿No tienes cuenta?{" "}
                   <span
                     onClick={() => navigate("/register-padre")}
-                    className="text-purple-600 font-bold hover:underline cursor-pointer"
+                    className="text-teal-600 font-bold hover:underline cursor-pointer"
                   >
                     Regístrate
                   </span>
@@ -420,9 +453,8 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Footer info */}
-            <div className="text-center mt-8 text-slate-500 text-xs" style={{fontFamily: 'DM Sans, sans-serif'}}>
-              <p>v1.0.0 • ReadSmartIA © 2025</p>
+            <div className="text-center mt-8 text-slate-500 text-xs" style={{fontFamily: 'Poppins, sans-serif'}}>
+              <p>v1.0.0 • BookiSmartIA © 2025</p>
             </div>
           </div>
         </div>
@@ -430,76 +462,42 @@ export default function Login() {
     );
   }
 
-  // 🖥️ DISEÑO WEB - Mejorado
+  // 🖥️ DISEÑO WEB
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
-        
-        * {
-          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
+        * { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif; }
+        h1,h2,h3,h4,h5,h6 { font-family: 'Fredoka', 'Poppins', sans-serif; }
       `}</style>
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/20 to-teal-50/30 flex flex-col">
         <Navbar />
 
-        <main className="pt-28 flex-1 flex items-center justify-center p-6">
-          <div className="relative bg-white/80 backdrop-blur-xl p-10 md:p-12 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 max-w-md w-full border border-white/60 overflow-hidden">
-            
-            {/* Elementos decorativos de fondo */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-200/20 rounded-full blur-3xl"></div>
+        <main className="pt-24 md:pt-28 flex-1 flex items-center justify-center p-4 md:p-6">
+          <div className="relative bg-white/80 backdrop-blur-xl p-8 md:p-10 lg:p-12 rounded-2xl md:rounded-3xl shadow-2xl shadow-slate-200/50 max-w-lg w-full border border-white/60 overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-200/15 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-teal-200/15 rounded-full blur-3xl"></div>
 
             <div className="relative z-10">
-              {/* Header */}
-              <div className="text-center mb-8">
-                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-blue-500/30">
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
+              <div className="text-center mb-6 md:mb-8">
+                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/20">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                     />
                   </svg>
                 </div>
-                <h2 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2 md:mb-3 tracking-tight">
                   Bienvenido de nuevo
                 </h2>
-                <p className="text-slate-600 text-base">
+                <p className="text-slate-600 text-sm md:text-base">
                   Ingresa para continuar aprendiendo
                 </p>
               </div>
 
-              {/* Mensaje de error */}
-              {errorMsg && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl mb-6 flex items-start shadow-sm">
-                  <svg
-                    className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span className="text-sm">{errorMsg}</span>
-                </div>
-              )}
+              {errorMsg && <AlertMessage message={errorMsg} type={errorType || "error"} />}
 
-              {/* Formulario */}
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email */}
                 <div>
@@ -518,19 +516,11 @@ export default function Login() {
                       className={`w-full px-4 py-3.5 pl-12 rounded-2xl border-2 bg-slate-50 focus:bg-white outline-none transition-all ${
                         errors.email
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                          : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                          : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                       }`}
                     />
-                    <svg
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
                       />
                     </svg>
@@ -540,7 +530,7 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Contraseña */}
+                {/* Password */}
                 <div>
                   <label className="text-slate-700 font-semibold text-sm block mb-2">
                     Contraseña
@@ -557,7 +547,7 @@ export default function Login() {
                       className={`w-full px-4 py-3.5 rounded-2xl border-2 bg-slate-50 focus:bg-white outline-none transition-all pr-12 ${
                         errors.password
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                          : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
+                          : "border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
                       }`}
                     />
                     <button
@@ -582,53 +572,37 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Botón Submit */}
+                {/* Link Recuperar contraseña (WEB) */}
+                <div className="flex justify-end -mt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
+                    className="text-sm font-semibold text-teal-600 hover:text-teal-700 hover:underline transition"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+
+                {/* Submit */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full py-4 rounded-2xl text-white font-bold text-lg shadow-xl transition-all mt-6 ${
+                  className={`w-full py-4 rounded-2xl text-white font-bold text-lg shadow-xl transition-all mt-2 ${
                     loading
                       ? "bg-slate-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-[1.02] shadow-blue-500/30"
+                      : "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-700 hover:scale-[1.02] shadow-emerald-500/20"
                   }`}
                 >
-                  {loading ? (
-                    <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Ingresando...
-                    </span>
-                  ) : (
-                    "Iniciar Sesión"
-                  )}
+                  {loading ? "Ingresando..." : "Iniciar Sesión"}
                 </button>
               </form>
 
-              {/* Link registro */}
-              <div className="mt-8 text-center">
+              <div className="mt-6 md:mt-8 text-center">
                 <p className="text-slate-600 text-sm">
                   ¿No tienes una cuenta?{" "}
                   <span
                     onClick={() => navigate("/register-padre")}
-                    className="text-purple-600 font-bold hover:underline cursor-pointer"
+                    className="text-teal-600 font-bold hover:underline cursor-pointer"
                   >
                     Regístrate aquí
                   </span>

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { MdClose, MdCheckCircle, MdError, MdSchool } from "react-icons/md";
+import { MdClose, MdSchool } from "react-icons/md";
+import Swal from "sweetalert2";
 import { crearCurso } from "../../services/cursosService";
 
 export default function ModalCrearCurso({ onClose, onCreated }) {
@@ -9,11 +10,6 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
 
   const [errorNombre, setErrorNombre] = useState("");
   const [guardando, setGuardando] = useState(false);
-  
-  // Modal de resultado
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [resultType, setResultType] = useState(""); // 'success' o 'error'
-  const [resultMessage, setResultMessage] = useState("");
 
   // Validación en tiempo real
   const handleNombreChange = (value) => {
@@ -31,16 +27,22 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
   const crear = async () => {
     // Validaciones
     if (!nombre.trim()) {
-      setResultType("error");
-      setResultMessage("El nombre del curso es obligatorio.");
-      setShowResultModal(true);
+      Swal.fire({
+        title: "Campo requerido",
+        text: "El nombre del curso es obligatorio.",
+        icon: "warning",
+        confirmButtonColor: "#9333ea",
+      });
       return;
     }
 
     if (errorNombre) {
-      setResultType("error");
-      setResultMessage("Por favor corrige los errores antes de guardar.");
-      setShowResultModal(true);
+      Swal.fire({
+        title: "Error de validación",
+        text: "Por favor corrige los errores antes de guardar.",
+        icon: "warning",
+        confirmButtonColor: "#9333ea",
+      });
       return;
     }
 
@@ -53,60 +55,86 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
         descripcion,
       });
 
-      setResultType("success");
-      setResultMessage("Curso creado exitosamente");
-      setShowResultModal(true);
+      await Swal.fire({
+        title: "¡Curso creado!",
+        text: "El curso ha sido creado exitosamente",
+        icon: "success",
+        confirmButtonColor: "#9333ea",
+        timer: 2000,
+        showConfirmButton: false,
+      });
       
-      // Esperar un momento antes de cerrar para que se vea el mensaje
-      setTimeout(() => {
-        onCreated();
-        onClose();
-      }, 1500);
+      onCreated();
+      onClose();
       
     } catch (error) {
       console.error("Error creando curso:", error);
       setGuardando(false);
-      setResultType("error");
-      setResultMessage("Hubo un error al crear el curso. Intenta nuevamente.");
-      setShowResultModal(true);
+      
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo crear el curso. Intenta nuevamente.",
+        icon: "error",
+        confirmButtonColor: "#9333ea",
+      });
     }
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
         
         * {
-          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
         h1, h2, h3, h4, h5, h6 {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Fredoka', 'Poppins', sans-serif;
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
         }
       `}</style>
 
-      {/* MODAL PRINCIPAL */}
+      {/* BACKDROP */}
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+        
+        {/* MODAL */}
+        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-slideIn">
           
-          {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-slate-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <MdSchool className="text-blue-600" size={20} />
+          {/* Header con gradiente morado */}
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-600 opacity-10"></div>
+            <div className="relative flex items-center justify-between p-5 border-b border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg">
+                  <MdSchool className="text-white" size={20} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Nuevo Curso
+                </h2>
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Nuevo Curso
-              </h2>
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-slate-100 rounded-lg transition"
+                disabled={guardando}
+              >
+                <MdClose size={24} className="text-slate-600" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-slate-100 rounded-lg transition"
-              disabled={guardando}
-            >
-              <MdClose size={24} />
-            </button>
           </div>
 
           {/* Contenido */}
@@ -123,15 +151,14 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
                 onChange={(e) => handleNombreChange(e.target.value)}
                 placeholder="Ej: Matemáticas 5to Grado"
                 disabled={guardando}
-                className={`w-full px-4 py-2.5 rounded-lg border-2 outline-none transition ${
+                className={`w-full px-4 py-2.5 rounded-xl border-2 outline-none transition ${
                   errorNombre
-                    ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                    : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+                    : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 } disabled:bg-slate-50 disabled:cursor-not-allowed`}
               />
               {errorNombre && (
-                <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
-                  <MdError size={14} />
+                <p className="text-red-600 text-xs mt-2 ml-1">
                   {errorNombre}
                 </p>
               )}
@@ -146,7 +173,7 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
                 value={nivel}
                 onChange={(e) => setNivel(e.target.value)}
                 disabled={guardando}
-                className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed"
               >
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <option key={n} value={n}>Nivel {n}</option>
@@ -165,24 +192,24 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
                 onChange={(e) => setDescripcion(e.target.value)}
                 placeholder="Breve descripción del curso..."
                 disabled={guardando}
-                className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition resize-none disabled:bg-slate-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition resize-none disabled:bg-slate-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
           {/* Footer con botones */}
-          <div className="flex gap-3 p-5 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row gap-3 p-5 border-t border-slate-200">
             <button
               onClick={onClose}
               disabled={guardando}
-              className="flex-1 px-4 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
             <button
               onClick={crear}
               disabled={guardando || !nombre.trim() || errorNombre}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-600 text-white font-semibold hover:from-purple-600 hover:via-violet-600 hover:to-fuchsia-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               {guardando ? (
                 <span className="flex items-center justify-center gap-2">
@@ -196,42 +223,6 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
           </div>
         </div>
       </div>
-
-      {/* MODAL DE RESULTADO */}
-      {showResultModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <div className="flex flex-col items-center text-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                resultType === 'success' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-                {resultType === 'success' ? (
-                  <MdCheckCircle className="text-green-600" size={32} />
-                ) : (
-                  <MdError className="text-red-600" size={32} />
-                )}
-              </div>
-              
-              <h3 className="text-lg font-bold text-slate-900 mb-2">
-                {resultType === 'success' ? '¡Éxito!' : 'Error'}
-              </h3>
-              
-              <p className="text-slate-600 mb-6">
-                {resultMessage}
-              </p>
-
-              {resultType === 'error' && (
-                <button
-                  onClick={() => setShowResultModal(false)}
-                  className="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
-                >
-                  Cerrar
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

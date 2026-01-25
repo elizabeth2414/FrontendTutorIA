@@ -6,35 +6,101 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex flex-col">
-      {/* Añadir fuentes de Google Fonts */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/20 to-orange-50/20 flex flex-col">
+      {/* Fuentes y animaciones */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fredoka:wght@400;500;600;700&display=swap');
         
         * {
-          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
         h1, h2, h3, h4, h5, h6 {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Fredoka', 'Poppins', sans-serif;
         }
 
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+          50% { transform: translateY(-15px); }
         }
 
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
 
         .animate-float {
           animation: float 6s ease-in-out infinite;
         }
 
-        .animate-pulse-glow {
-          animation: pulse-glow 3s ease-in-out infinite;
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .animate-slide-in-left {
+          animation: slideInLeft 0.8s ease-out forwards;
+        }
+
+        .animate-slide-in-right {
+          animation: slideInRight 0.8s ease-out forwards;
+        }
+
+        .animate-scale-in {
+          animation: scaleIn 0.8s ease-out forwards;
+        }
+
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+
+        /* Hover suave para imágenes */
+        .hover-lift {
+          transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-10px) scale(1.02);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
       `}</style>
 
@@ -44,39 +110,39 @@ export default function Home() {
       {/* CONTENIDO PRINCIPAL */}
       <main className="flex-1 pt-24 flex flex-col items-center px-4 pb-10 md:px-6">
 
-        {/* HERO SECTION */}
+        {/* HERO SECTION CON IMAGEN DE PROFESORA */}
         <section className="w-full max-w-7xl mt-6 md:mt-10">
-          <div className="relative bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/10 border border-white/60 p-8 md:p-14 overflow-hidden">
+          <div className="relative bg-white/60 backdrop-blur-xl rounded-3xl md:rounded-[2.5rem] shadow-xl border border-white/80 p-6 md:p-14 overflow-hidden">
             
-            {/* Elementos decorativos mejorados */}
-            <div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl animate-pulse-glow"></div>
-            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse-glow" style={{animationDelay: '1.5s'}}></div>
+            {/* Elementos decorativos sutiles */}
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br from-orange-200/20 to-amber-200/20 rounded-full blur-3xl"></div>
 
-            <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+            <div className="relative z-10 grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
               
               {/* Texto principal */}
-              <div className="space-y-6">
+              <div className="space-y-6 animate-slide-in-left">
                 
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-100">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                  <span className="text-sm font-semibold text-blue-700">BookieSmartIA</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full border border-emerald-200/50">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                  <span className="text-sm font-semibold text-emerald-700">BookiSmartIA</span>
                 </div>
 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-slate-900 leading-[1.1] tracking-tight">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 leading-tight tracking-tight">
                   Aprende a leer de manera
-                  <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+                  <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600">
                     inteligente y divertida
                   </span>
                 </h1>
                 
-                <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl">
-                  <span className="font-semibold text-blue-600">BookieSmartIA</span> transforma el aprendizaje de la lectura con retroalimentación automática, ejercicios interactivos y seguimiento personalizado.
+                <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-xl">
+                  <span className="font-semibold text-emerald-600">BookiSmartIA</span> transforma el aprendizaje de la lectura con retroalimentación automática, ejercicios interactivos y seguimiento personalizado.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
                   <button
                     onClick={() => navigate("/login")}
-                    className="group px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-3"
+                    className="group px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-3"
                   >
                     <svg className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -85,21 +151,21 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => navigate("/register-padre")}
-                    className="px-8 py-4 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 font-semibold hover:border-blue-300 hover:bg-blue-50/50 hover:scale-[1.02] transition-all duration-300"
+                    className="px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl bg-white border-2 border-slate-200 text-slate-700 font-semibold hover:border-emerald-300 hover:bg-emerald-50/50 hover:scale-[1.02] transition-all duration-300"
                   >
                     Crear Cuenta Gratis
                   </button>
                 </div>
 
-                <div className="flex items-center gap-6 pt-4 text-sm text-slate-500">
+                <div className="flex flex-wrap items-center gap-4 md:gap-6 pt-4 text-xs md:text-sm text-slate-500">
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                     <span>Sin tarjeta requerida</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                     <span>Plan gratuito disponible</span>
@@ -107,24 +173,65 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Imagen hero mejorada */}
-              <div className="flex justify-center lg:justify-end">
-                <div className="relative animate-float">
-                  <div className="w-72 h-72 md:w-96 md:h-96 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 rounded-[3rem] flex items-center justify-center shadow-2xl shadow-blue-500/20 rotate-6 hover:rotate-3 transition-transform duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent rounded-[3rem]"></div>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/512/3135/3135765.png"
-                      alt="Niños aprendiendo con tecnología"
-                      className="w-56 h-56 md:w-72 md:h-72 relative z-10 drop-shadow-2xl"
-                    />
-                  </div>
-                  {/* Elementos flotantes mejorados */}
-                  <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-3xl flex items-center justify-center shadow-xl shadow-orange-500/20 hover:scale-110 transition-transform duration-300">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Meta" className="w-12 h-12" />
-                  </div>
-                  <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-gradient-to-br from-pink-100 to-rose-100 rounded-3xl flex items-center justify-center shadow-xl shadow-pink-500/20 hover:scale-110 transition-transform duration-300">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3069/3069945.png" alt="Estrella" className="w-10 h-10" />
-                  </div>
+              {/* Imagen de profesora con niños */}
+              <div className="flex justify-center lg:justify-end animate-slide-in-right">
+                <div className="relative w-full max-w-lg">
+                  <img
+                    src="/src/assets/images/profeenseñando.png"
+                    alt="Maestra enseñando con BookiSmartIA"
+                    className="w-full h-auto rounded-2xl md:rounded-3xl shadow-2xl hover-lift"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECCIÓN DEL PROBLEMA (niño confundido) */}
+        <section className="w-full max-w-7xl mt-16 md:mt-24">
+          <div className="bg-white/60 backdrop-blur-xl rounded-3xl md:rounded-[2.5rem] shadow-xl border border-white/80 p-6 md:p-12 overflow-hidden">
+            <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+              
+              {/* Imagen del niño confundido - primero en móvil */}
+              <div className="flex justify-center order-1 lg:order-1 animate-scale-in">
+                <div className="relative w-full max-w-md">
+                  <img
+                    src="/src/assets/images/niñonocomprende.png"
+                    alt="Niño con dificultades en la lectura"
+                    className="w-full h-auto rounded-2xl md:rounded-3xl shadow-2xl hover-lift"
+                  />
+                </div>
+              </div>
+
+              {/* Texto del problema */}
+              <div className="space-y-6 order-2 lg:order-2 animate-fade-in-up stagger-2">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-200/50">
+                  <span className="text-sm font-semibold text-orange-700">El Desafío</span>
+                </div>
+
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
+                  ¿Tu hijo tiene dificultades con la lectura?
+                </h2>
+                
+                <div className="space-y-4 text-slate-600">
+                  <p className="flex items-start gap-3">
+                    <span className="text-orange-500 text-xl flex-shrink-0">•</span>
+                    <span>Muchos niños de 7-10 años luchan con la comprensión lectora</span>
+                  </p>
+                  <p className="flex items-start gap-3">
+                    <span className="text-orange-500 text-xl flex-shrink-0">•</span>
+                    <span>La retroalimentación tradicional es lenta y poco personalizada</span>
+                  </p>
+                  <p className="flex items-start gap-3">
+                    <span className="text-orange-500 text-xl flex-shrink-0">•</span>
+                    <span>Los padres no siempre tienen tiempo de practicar todos los días</span>
+                  </p>
+                </div>
+
+                <div className="bg-emerald-50 border-l-4 border-emerald-500 rounded-xl p-4 md:p-6">
+                  <p className="text-slate-700 font-medium">
+                    <span className="text-emerald-600 font-bold">BookiSmartIA</span> soluciona esto con inteligencia artificial que ofrece retroalimentación instantánea y ejercicios adaptados al nivel de cada niño.
+                  </p>
                 </div>
               </div>
             </div>
@@ -132,263 +239,253 @@ export default function Home() {
         </section>
 
         {/* CÓMO FUNCIONA */}
-        <section className="w-full max-w-7xl mt-20 md:mt-28">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-full border border-purple-100 mb-6">
+        <section className="w-full max-w-7xl mt-16 md:mt-24">
+          <div className="text-center mb-12 md:mb-16 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-full border border-purple-200/50 mb-6">
               <span className="text-sm font-semibold text-purple-700">Proceso Simple</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
-              Así funciona <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">ReadSmartIA</span>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
+              Así funciona <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600">BookiSmartIA</span>
             </h2>
-            <p className="text-slate-600 text-lg md:text-xl max-w-2xl mx-auto">
+            <p className="text-slate-600 text-base md:text-lg max-w-2xl mx-auto">
               Cuatro pasos diseñados para maximizar el aprendizaje
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {[
               { 
                 icon: "M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z",
                 title: "Escucha", 
                 desc: "Oye la lectura narrada correctamente",
-                color: "from-blue-500 to-indigo-500",
-                bg: "bg-blue-50"
+                color: "from-emerald-400 to-teal-500",
+                bg: "bg-emerald-50"
               },
               { 
                 icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
                 title: "Lee", 
                 desc: "Practica tu lectura en voz alta",
-                color: "from-purple-500 to-pink-500",
+                color: "from-purple-400 to-pink-500",
                 bg: "bg-purple-50"
               },
               { 
                 icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
                 title: "Recibe Feedback", 
                 desc: "Correcciones automáticas de la IA",
-                color: "from-green-500 to-emerald-500",
+                color: "from-green-400 to-emerald-500",
                 bg: "bg-green-50"
               },
               { 
                 icon: "M13 10V3L4 14h7v7l9-11h-7z",
                 title: "Mejora", 
                 desc: "Practica áreas de oportunidad",
-                color: "from-orange-500 to-red-500",
+                color: "from-orange-400 to-amber-500",
                 bg: "bg-orange-50"
               }
             ].map((step, idx) => (
               <div 
                 key={idx} 
-                className="group relative bg-white rounded-3xl p-8 shadow-lg shadow-slate-200/50 border border-slate-100 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500"
-                style={{animationDelay: `${idx * 100}ms`}}
+                className={`group relative bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg border border-slate-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-500 animate-fade-in-up stagger-${idx + 1}`}
               >
-                <div className={`w-16 h-16 mx-auto mb-6 rounded-2xl ${step.bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                  <svg className={`w-8 h-8 bg-gradient-to-br ${step.color} bg-clip-text text-transparent`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={`w-14 h-14 md:w-16 md:h-16 mx-auto mb-4 md:mb-6 rounded-xl md:rounded-2xl ${step.bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <svg className={`w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br ${step.color} bg-clip-text text-transparent`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={step.icon} />
                   </svg>
                 </div>
-                <div className="text-center space-y-3">
-                  <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-white font-bold text-sm bg-gradient-to-br ${step.color} shadow-lg`}>
+                <div className="text-center space-y-2 md:space-y-3">
+                  <div className={`inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full text-white font-bold text-sm bg-gradient-to-br ${step.color} shadow-md`}>
                     {idx + 1}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">{step.title}</h3>
-                  <p className="text-slate-600 leading-relaxed">{step.desc}</p>
+                  <h3 className="text-lg md:text-xl font-bold text-slate-900">{step.title}</h3>
+                  <p className="text-sm md:text-base text-slate-600 leading-relaxed">{step.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* SECCIÓN DE ROLES */}
-        <section className="w-full max-w-7xl mt-20 md:mt-28">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100 mb-6">
+        {/* SECCIÓN DE ROLES CON FAMILIA */}
+        <section className="w-full max-w-7xl mt-16 md:mt-24">
+          <div className="text-center mb-12 md:mb-16 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-full border border-indigo-200/50 mb-6">
               <span className="text-sm font-semibold text-indigo-700">Para Todos</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
-              ¿Quién usa ReadSmartIA?
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
+              ¿Quién usa BookiSmartIA?
             </h2>
-            <p className="text-slate-600 text-lg md:text-xl">
+            <p className="text-slate-600 text-base md:text-lg">
               Diseñado para cada parte del proceso educativo
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             {[
               { 
                 icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
                 title: "Estudiante", 
                 desc: "Practico lecturas interactivas y la IA me ayuda a mejorar mi pronunciación con ejercicios personalizados.",
-                color: "from-blue-500 to-indigo-600",
-                bg: "blue",
-                accent: "bg-blue-500"
+                color: "from-emerald-400 to-teal-500",
+                accent: "bg-emerald-500"
               },
               { 
                 icon: "M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222",
                 title: "Docente", 
                 desc: "Asigno lecturas, analizo reportes detallados y doy seguimiento al progreso de cada estudiante en tiempo real.",
-                color: "from-purple-500 to-pink-600",
-                bg: "purple",
+                color: "from-purple-400 to-pink-500",
                 accent: "bg-purple-500"
               },
               { 
                 icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
                 title: "Representante", 
                 desc: "Acompaño el aprendizaje de mi hijo, reviso sus avances y me mantengo informado de su progreso.",
-                color: "from-pink-500 to-rose-600",
-                bg: "pink",
+                color: "from-pink-400 to-rose-500",
                 accent: "bg-pink-500"
               }
             ].map((role, idx) => (
               <div 
                 key={idx} 
-                className="group relative bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-3 overflow-hidden"
+                className={`group relative bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl border border-slate-100 hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 overflow-hidden animate-fade-in-up stagger-${idx + 1}`}
               >
-                {/* Gradient accent bar */}
+                {/* Barra de acento */}
                 <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${role.color}`}></div>
                 
-                <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${role.color} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
-                  <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-gradient-to-br ${role.color} flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
+                  <svg className="w-8 h-8 md:w-10 md:h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d={role.icon} />
                   </svg>
                 </div>
                 
-                <h3 className={`text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r ${role.color}`}>
+                <h3 className={`text-xl md:text-2xl font-bold mb-3 md:mb-4 text-transparent bg-clip-text bg-gradient-to-r ${role.color}`}>
                   {role.title}
                 </h3>
                 
-                <p className="text-slate-600 mb-8 leading-relaxed">
+                <p className="text-sm md:text-base text-slate-600 mb-6 md:mb-8 leading-relaxed">
                   {role.desc}
                 </p>
                 
                 <button
                   onClick={() => navigate(`/register-${role.title.toLowerCase()}`)}
-                  className={`w-full py-3.5 rounded-2xl bg-gradient-to-r ${role.color} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]`}
+                  className={`w-full py-3 md:py-3.5 rounded-xl md:rounded-2xl bg-gradient-to-r ${role.color} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]`}
                 >
                   Registro para {role.title}
                 </button>
               </div>
             ))}
           </div>
+
+          {/* Imagen de familia debajo */}
+          <div className="mt-12 md:mt-16 flex justify-center animate-scale-in stagger-4">
+            <div className="relative w-full max-w-3xl">
+              <img
+                src="/src/assets/images/padresenseñando.png"
+                alt="Familia usando BookiSmartIA"
+                className="w-full h-auto rounded-2xl md:rounded-3xl shadow-2xl hover-lift"
+              />
+            </div>
+          </div>
         </section>
 
-        {/* BENEFICIOS */}
-        <section className="w-full max-w-7xl mt-20 md:mt-28">
-          <div className="relative bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/50 rounded-[2.5rem] p-10 md:p-16 border border-white/60 overflow-hidden">
+        {/* DESCARGA LA APP - SECCIÓN QR */}
+        <section className="w-full max-w-5xl mt-16 md:mt-24">
+          <div className="relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl md:rounded-3xl p-8 md:p-12 border border-emerald-200/50 overflow-hidden animate-fade-in-up">
             
-            {/* Elementos de fondo */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl"></div>
-            
-            <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-8">
-                <div>
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-100 mb-6">
-                    <span className="text-sm font-semibold text-blue-700">Ventajas Únicas</span>
-                  </div>
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
-                    Beneficios de aprender con <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Inteligencia Artificial</span>
-                  </h2>
-                </div>
-                
-                <div className="space-y-5">
-                  {[
-                    { 
-                      icon: "M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4",
-                      text: "Aprendizaje personalizado que se adapta al ritmo de cada niño",
-                      color: "from-blue-500 to-indigo-500"
-                    },
-                    { 
-                      icon: "M13 10V3L4 14h7v7l9-11h-7z",
-                      text: "Retroalimentación inmediata y constructiva",
-                      color: "from-purple-500 to-pink-500"
-                    },
-                    { 
-                      icon: "M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-                      text: "Métodos interactivos que mantienen la motivación",
-                      color: "from-green-500 to-emerald-500"
-                    },
-                    { 
-                      icon: "M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z",
-                      text: "Accesible desde cualquier dispositivo, en cualquier momento",
-                      color: "from-orange-500 to-red-500"
-                    }
-                  ].map((benefit, idx) => (
-                    <div 
-                      key={idx} 
-                      className="group flex items-start gap-4 p-4 rounded-2xl hover:bg-white/70 transition-all duration-300"
-                    >
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${benefit.color} flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={benefit.icon} />
-                        </svg>
-                      </div>
-                      <p className="text-slate-700 text-lg leading-relaxed pt-2">
-                        {benefit.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+            <div className="relative z-10 text-center space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-emerald-200/50 mb-4">
+                <span className="text-sm font-semibold text-emerald-700">Disponible en Google Play</span>
               </div>
+
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
+                Descarga BookiSmartIA
+              </h2>
               
-              <div className="flex justify-center lg:justify-end">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-[3rem] blur-2xl"></div>
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/8370/8370847.png"
-                    alt="Beneficios de la educación con IA"
-                    className="relative w-72 h-72 md:w-96 md:h-96 drop-shadow-2xl animate-float"
-                  />
-                  <div className="absolute -bottom-8 -right-8 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-3xl p-6 shadow-2xl shadow-orange-500/20 hover:scale-110 transition-transform duration-300">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">+95%</div>
-                      <div className="text-slate-600 text-sm font-medium mt-1">Mejora en<br/>pronunciación</div>
+              <p className="text-slate-600 text-base md:text-lg max-w-2xl mx-auto">
+                Escanea el código QR o descarga desde Play Store
+              </p>
+
+              {/* ESPACIO PARA CÓDIGO QR */}
+              <div className="flex flex-col items-center gap-6 pt-6">
+                
+                {/* Contenedor del QR - Aquí pegarás tu código QR */}
+                <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-emerald-200/50">
+                  <div className="w-48 h-48 md:w-64 md:h-64 flex items-center justify-center bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
+                    {/* AQUÍ VA TU CÓDIGO QR */}
+                    {/* Ejemplo: <img src="/qr-code.png" alt="QR Code" /> */}
+                    {/* O el código que genere el Play Store */}
+                    <div className="text-center text-slate-400">
+                      <svg className="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                      <p className="text-sm font-medium">Tu código QR aquí</p>
+                      <p className="text-xs mt-1">Pega el código del Play Store</p>
                     </div>
                   </div>
                 </div>
+
+                {/* Botón alternativo */}
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <button
+                    onClick={() => window.open('https://play.google.com/store', '_blank')}
+                    className="flex items-center gap-3 px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                  >
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
+                    </svg>
+                    <span className="font-semibold">Descargar en Play Store</span>
+                  </button>
+
+                  <p className="text-slate-500 text-sm">
+                    o escanea el código QR
+                  </p>
+                </div>
               </div>
+
+              <p className="text-slate-500 text-sm pt-4">
+                📱 Compatible con Android 6.0 o superior
+              </p>
             </div>
           </div>
         </section>
 
         {/* LLAMADO A LA ACCIÓN FINAL */}
-        <section className="w-full max-w-5xl mt-20 md:mt-28 text-center">
-          <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-[2.5rem] p-12 md:p-16 text-white shadow-2xl shadow-blue-500/30 overflow-hidden">
+        <section className="w-full max-w-5xl mt-16 md:mt-24 text-center">
+          <div className="relative bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 rounded-2xl md:rounded-3xl p-8 md:p-12 lg:p-16 text-white shadow-2xl shadow-emerald-500/20 overflow-hidden">
             
-            {/* Efectos de fondo */}
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+            {/* Efectos de fondo sutiles */}
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
             
             <div className="relative z-10 space-y-6">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
                 ¿Listo para transformar la<br className="hidden sm:block" /> experiencia de aprendizaje?
               </h2>
               
-              <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-                Únete a miles de estudiantes, docentes y padres que ya están usando ReadSmartIA
+              <p className="text-emerald-50 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed">
+                Únete a miles de estudiantes, docentes y padres que ya están usando BookiSmartIA
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <button
                   onClick={() => navigate("/register-padre")}
-                  className="px-8 py-4 bg-white text-blue-700 font-semibold rounded-2xl hover:bg-blue-50 hover:scale-105 transition-all shadow-xl hover:shadow-2xl"
+                  className="px-6 md:px-8 py-3 md:py-4 bg-white text-emerald-700 font-semibold rounded-xl md:rounded-2xl hover:bg-emerald-50 hover:scale-105 transition-all shadow-xl hover:shadow-2xl"
                 >
                   Comenzar Gratis
                 </button>
                 <button
                   onClick={() => navigate("/sobre-nosotros")}
-                  className="px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white font-semibold rounded-2xl hover:bg-white/20 hover:scale-105 transition-all"
+                  className="px-6 md:px-8 py-3 md:py-4 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white font-semibold rounded-xl md:rounded-2xl hover:bg-white/20 hover:scale-105 transition-all"
                 >
                   Conocer Más
                 </button>
               </div>
               
-              <div className="flex items-center justify-center gap-8 pt-6 text-blue-100 text-sm">
+              <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 pt-6 text-emerald-50 text-xs md:text-sm">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span>Sin tarjeta requerida</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span>Plan gratuito disponible</span>

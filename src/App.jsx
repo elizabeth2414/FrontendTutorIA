@@ -7,6 +7,9 @@ import SobreNosotros from "./pages/info/SobreNosotros.jsx";
 import Mision from "./pages/info/Mision.jsx";
 import Objetivo from "./pages/info/Objetivo.jsx";
 import Contacto from "./pages/info/Contacto.jsx";
+import VerificarEmail from "./pages/auth/VerificarEmail.jsx";
+import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
+import ResetPassword from "./pages/auth/ResetPassword.jsx";
 
 import MenuDocente from "./pages/docente/MenuDocente.jsx";
 import DashboardDocente from "./pages/docente/DashboardDocente.jsx";
@@ -52,6 +55,9 @@ function App() {
       <Route path="/mision" element={<Mision />} />
       <Route path="/objetivo" element={<Objetivo />} />
       <Route path="/contacto" element={<Contacto />} />
+      <Route path="/verificar-email" element={<VerificarEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
 
       {/* ===================== PRIVADAS - DOCENTE ===================== */}

@@ -4,7 +4,7 @@ import Logger from "../logs/logger";
 const BASE_URL = "/admin/docentes";
 
 // ==============================
-// LISTAR DOCENTES
+// LISTAR DOCENTES (TODOS)
 // ==============================
 export const listarDocentesAdmin = async () => {
   try {
@@ -50,12 +50,27 @@ export const actualizarDocenteAdmin = async (id, docenteData) => {
 
 
 // ==============================
-// ELIMINAR DOCENTE
+// TOGGLE ACTIVO/INACTIVO (NUEVO)
+// ==============================
+export const toggleDocenteAdmin = async (id) => {
+  try {
+    const { data } = await axiosClient.patch(`${BASE_URL}/${id}/toggle`);
+    Logger.info(`✔ Docente ${id} estado cambiado`);
+    return data;
+  } catch (error) {
+    Logger.error(`❌ Error cambiando estado docente ${id}:`, error);
+    throw error;
+  }
+};
+
+
+// ==============================
+// ELIMINAR DOCENTE (PERMANENTE)
 // ==============================
 export const eliminarDocenteAdmin = async (id) => {
   try {
     await axiosClient.delete(`${BASE_URL}/${id}`);
-    Logger.warn(`⚠ Docente ${id} eliminado`);
+    Logger.warn(`⚠ Docente ${id} eliminado PERMANENTEMENTE`);
   } catch (error) {
     Logger.error(`❌ Error eliminando docente ${id}:`, error);
     throw error;

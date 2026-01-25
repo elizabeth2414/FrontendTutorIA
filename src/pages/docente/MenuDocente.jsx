@@ -11,6 +11,7 @@ import {
   MdLogout,
   MdCategory,
   MdAutoStories,
+  MdChevronRight,
 } from "react-icons/md";
 
 import { getUsuarioActual } from "../../services/authService";
@@ -20,7 +21,8 @@ export default function MenuDocente() {
   const location = useLocation();
   const isMobile = Capacitor.isNativePlatform();
 
-  const [open, setOpen] = useState(!isMobile); // En móvil empieza cerrado
+  // En desktop abierto, en móvil cerrado
+  const [open, setOpen] = useState(isMobile ? false : window.innerWidth >= 768);
   const [docente, setDocente] = useState(null);
 
   const opciones = [
@@ -37,87 +39,280 @@ export default function MenuDocente() {
       .catch(() => navigate("/login"));
   }, []);
 
+  // Detectar resize solo en web
+  useEffect(() => {
+    if (!isMobile) {
+      const handleResize = () => {
+        setOpen(window.innerWidth >= 768);
+      };
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [isMobile]);
+
   const handleNavigate = (ruta) => {
     navigate(ruta);
-    if (isMobile) {
-      setOpen(false); // Cerrar menú en móvil después de navegar
+    if (isMobile || window.innerWidth < 768) {
+      setOpen(false);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("roles");
     navigate("/login");
   };
 
-  // 📱 DISEÑO MÓVIL
+  // Obtener título actual de la ruta
+  const getTituloActual = () => {
+    const rutaActual = opciones.find(opc => location.pathname.includes(opc.ruta));
+    return rutaActual ? rutaActual.titulo : "Dashboard";
+  };
+
+  // 📱 DISEÑO MÓVIL NATIVO
   if (isMobile) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-purple-50">
-        {/* Header fijo con botón menú */}
-        <header className="bg-white shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-40">
-          <button
-            onClick={() => setOpen(!open)}
-            className="p-2 rounded-xl bg-blue-400 text-white hover:bg-blue-500 transition active:scale-95"
-          >
-            <MdMenu size={24} />
-          </button>
+      <>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
+          
+          * {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+          }
+          
+          h1, h2, h3, h4, h5, h6 {
+            font-family: 'Fredoka', 'Poppins', sans-serif;
+          }
+          
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          
+          .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out;
+          }
+        `}</style>
 
-          <div className="flex items-center gap-2">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/3135/3135755.png"
-              className="w-9 h-9 rounded-full border-2 border-blue-400"
-              alt="Avatar"
-            />
-            <div className="text-sm">
-              <p className="font-bold text-blue-700 leading-tight">
-                {docente ? `${docente.nombre}` : "Cargando..."}
-              </p>
-              <p className="text-gray-500 text-xs">{docente?.apellido || ""}</p>
-            </div>
-          </div>
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-pink-50 to-fuchsia-50">
+          {/* Header fijo superior - MORADO/ROSA */}
+          <header className="bg-white/90 backdrop-blur-xl shadow-lg px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-40 border-b border-purple-200/50">
+            <button
+              onClick={() => setOpen(!open)}
+              className="p-2.5 rounded-xl bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-600 text-white hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-700 transition-all duration-300 shadow-lg shadow-purple-500/20 active:scale-95"
+            >
+              <MdMenu size={24} />
+            </button>
 
-          <div className="w-10"></div> {/* Espaciador para centrar */}
-        </header>
-
-        {/* Overlay cuando el menú está abierto */}
-        {open && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 animate-fadeIn"
-            onClick={() => setOpen(false)}
-          ></div>
-        )}
-
-        {/* Menú lateral deslizante */}
-        <div
-          className={`fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ${
-            open ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          {/* Header del menú */}
-          <div className="bg-gradient-to-br from-blue-400 to-purple-400 p-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/3135/3135755.png"
-                className="w-12 h-12 rounded-full border-2 border-white shadow-lg"
-                alt="Avatar"
-              />
-              <div className="text-white">
-                <h2 className="text-lg font-bold">
-                  {docente ? docente.nombre : "Cargando..."}
-                </h2>
-                <p className="text-sm opacity-90">{docente?.apellido}</p>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 via-fuchsia-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-500/20">
+                {docente ? docente.nombre.charAt(0).toUpperCase() : "?"}
+              </div>
+              <div className="text-sm">
+                <p className="font-bold text-slate-900 leading-tight">
+                  {docente ? `${docente.nombre}` : "Cargando..."}
+                </p>
+                <p className="text-slate-500 text-xs">{docente?.apellido || ""}</p>
               </div>
             </div>
-            <button
+
+            <div className="w-10"></div>
+          </header>
+
+          {/* Overlay */}
+          {open && (
+            <div
+              className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
               onClick={() => setOpen(false)}
-              className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition"
-            >
-              <MdClose size={22} className="text-white" />
-            </button>
+            ></div>
+          )}
+
+          {/* Menú lateral deslizante - MORADO/ROSA */}
+          <div
+            className={`fixed top-0 left-0 h-screen w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 overflow-y-auto ${
+              open ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            {/* Header del menú - GRADIENTE MORADO/ROSA */}
+            <div className="bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-600 p-6 flex items-center justify-between sticky top-0 z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-xl flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">
+                    {docente ? docente.nombre.charAt(0).toUpperCase() : "?"}
+                  </span>
+                </div>
+                <div className="text-white">
+                  <h2 className="text-lg font-bold">
+                    {docente ? docente.nombre : "Cargando..."}
+                  </h2>
+                  <p className="text-sm opacity-90">{docente?.apellido}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-300 backdrop-blur-sm"
+              >
+                <MdClose size={24} className="text-white" />
+              </button>
+            </div>
+
+            {/* Opciones del menú - MEJORADAS */}
+            <nav className="p-5">
+              <ul className="space-y-2">
+                {opciones.map((opc, index) => {
+                  const activo = location.pathname.includes(opc.ruta);
+
+                  return (
+                    <li
+                      key={index}
+                      onClick={() => handleNavigate(opc.ruta)}
+                      className={`
+                        flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300
+                        ${
+                          activo
+                            ? "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-600 text-white shadow-lg shadow-purple-500/20 scale-[1.02]"
+                            : "hover:bg-slate-100 text-slate-700 active:scale-95"
+                        }
+                      `}
+                    >
+                      <span className={`transition-transform duration-300 ${activo ? "scale-110" : ""}`}>
+                        {opc.icono}
+                      </span>
+                      <span className="font-semibold text-sm flex-1">{opc.titulo}</span>
+                      {activo && <MdChevronRight size={20} className="opacity-70" />}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Logout */}
+              <div className="mt-8 pt-6 border-t border-slate-200">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-4 p-4 w-full rounded-2xl cursor-pointer hover:bg-red-50 transition-all duration-300 text-red-600 font-semibold active:scale-95"
+                >
+                  <MdLogout size={24} />
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
+            </nav>
+
+            {/* Footer del menú - ACTUALIZADO */}
+            <div className="p-5 mt-4">
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl text-center border border-purple-100">
+                <p className="text-xs text-slate-600 font-medium">BookiSmartIA • Docentes</p>
+                <p className="text-xs text-slate-400 mt-1">v1.0.0</p>
+              </div>
+            </div>
           </div>
 
-          {/* Opciones del menú */}
-          <nav className="p-4">
+          {/* Contenido principal - FONDO BLANCO LIMPIO */}
+          <main className="flex-1 pt-20 p-4 overflow-y-auto">
+            {/* Breadcrumb */}
+            <div className="mb-4 animate-fadeIn">
+              <div className="flex items-center gap-2 text-sm text-slate-600 mb-4">
+                <span className="text-slate-400">Panel Docente</span>
+                <MdChevronRight size={16} className="text-slate-400" />
+                <span className="text-purple-600 font-semibold">{getTituloActual()}</span>
+              </div>
+            </div>
+
+            {/* Contenedor blanco con sombra suave */}
+            <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 min-h-[calc(100vh-12rem)] border border-slate-100 animate-fadeIn">
+              <Outlet />
+            </div>
+          </main>
+        </div>
+      </>
+    );
+  }
+
+  // 🖥️ DISEÑO WEB/TABLET - MORADO/ROSA
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
+        
+        * {
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          font-family: 'Fredoka', 'Poppins', sans-serif;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.4s ease-out;
+        }
+        
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/20 to-pink-50/30">
+        {/* Overlay solo móvil web */}
+        {open && (
+          <div
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm"
+          />
+        )}
+
+        {/* Botón Abrir/Cerrar - MORADO/ROSA */}
+        <button
+          onClick={() => setOpen(!open)}
+          className={`
+            fixed top-6 z-[60] bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-600 hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-700 text-white rounded-full p-3 shadow-2xl shadow-purple-500/30 transition-all duration-300 hover:scale-110 border-4 border-white
+            ${open ? "left-[16.5rem]" : "left-[3.5rem]"}
+          `}
+        >
+          {open ? <MdClose size={20} /> : <MdMenu size={20} />}
+        </button>
+
+        {/* Menu lateral - MEJORADO CON GRADIENTE SUTIL MORADO */}
+        <aside
+          className={`
+            fixed top-0 left-0 z-50 h-screen bg-white/95 backdrop-blur-xl shadow-2xl border-r border-purple-200/50
+            transition-all duration-300 overflow-y-auto
+            ${open ? "w-72" : "w-20"}
+            ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          `}
+        >
+          {/* Gradiente decorativo superior MORADO */}
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-purple-500/10 via-fuchsia-500/10 to-pink-500/10 blur-3xl"></div>
+
+          <div className="p-6 relative">
+            {/* Información del Docente - MEJORADA */}
+            <div className="flex items-center mb-8 pb-6 border-b border-slate-200 relative">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-400 via-fuchsia-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 flex-shrink-0">
+                {docente ? docente.nombre.charAt(0).toUpperCase() : "?"}
+              </div>
+              {open && (
+                <div className="ml-4 min-w-0 flex-1 animate-slideIn">
+                  <h2 className="text-lg font-bold text-slate-900 truncate">
+                    {docente ? docente.nombre : "Cargando..."}
+                  </h2>
+                  <p className="text-slate-500 text-sm truncate">{docente?.apellido || ""}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
+                    <span className="text-xs text-purple-600 font-medium">En línea</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Opciones - MEJORADAS */}
             <ul className="space-y-2">
               {opciones.map((opc, index) => {
                 const activo = location.pathname.includes(opc.ruta);
@@ -127,135 +322,81 @@ export default function MenuDocente() {
                     key={index}
                     onClick={() => handleNavigate(opc.ruta)}
                     className={`
-                      flex items-center gap-3 p-3.5 rounded-xl cursor-pointer transition-all
-                      ${
-                        activo
-                          ? "bg-gradient-to-r from-blue-400 to-purple-400 text-white shadow-lg scale-[1.02]"
-                          : "hover:bg-gray-100 text-gray-700"
+                      flex items-center gap-4 p-3.5 rounded-2xl cursor-pointer transition-all duration-300
+                      ${activo 
+                        ? "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-600 text-white shadow-lg shadow-purple-500/20 scale-[1.02]" 
+                        : "hover:bg-slate-100 text-slate-700 hover:scale-[1.01]"
                       }
                     `}
                   >
-                    <span className={`transition ${activo ? "scale-110" : ""}`}>
+                    <span
+                      className={`transition-all duration-300 flex-shrink-0 ${
+                        activo ? "scale-110" : ""
+                      }`}
+                    >
                       {opc.icono}
                     </span>
-                    <span className="font-medium">{opc.titulo}</span>
+
+                    {open && (
+                      <span className="font-semibold text-sm transition-all duration-300 truncate flex-1">
+                        {opc.titulo}
+                      </span>
+                    )}
+                    
+                    {open && activo && (
+                      <MdChevronRight size={20} className="opacity-70 flex-shrink-0" />
+                    )}
                   </li>
                 );
               })}
-            </ul>
 
-            {/* Logout */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <button
+              {/* Logout */}
+              <li
                 onClick={handleLogout}
-                className="flex items-center gap-3 p-3.5 w-full rounded-xl cursor-pointer hover:bg-red-50 transition text-red-600 font-medium"
+                className="flex items-center gap-4 p-3.5 mt-8 rounded-2xl cursor-pointer hover:bg-red-50 transition-all duration-300 text-red-600 border-t border-slate-200 pt-8 hover:scale-[1.01]"
               >
-                <MdLogout size={24} />
-                <span>Cerrar sesión</span>
-              </button>
-            </div>
-          </nav>
-
-          {/* Footer del menú */}
-          <div className="absolute bottom-4 left-0 right-0 px-4">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-xl text-center">
-              
-              <p className="text-xs text-gray-500">v1.0.0</p>
-            </div>
+                <MdLogout size={24} className="flex-shrink-0" />
+                {open && <span className="font-semibold text-sm truncate">Cerrar sesión</span>}
+              </li>
+            </ul>
           </div>
-        </div>
 
-        {/* Contenido principal */}
-        <main className="flex-1 p-4 overflow-y-auto">
-          <Outlet />
-        </main>
-      </div>
-    );
-  }
-
-  // 🖥️ DISEÑO WEB (ORIGINAL)
-  return (
-    <div className="min-h-screen flex bg-gray-100">
-      {/* ======================= MENU LATERAL ======================= */}
-      <div
-        className={`${
-          open ? "w-64" : "w-20"
-        } bg-white shadow-xl transition-all duration-300 p-5 relative border-r border-gray-200`}
-      >
-        {/* Botón Abrir/Cerrar */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="absolute -right-3 top-6 bg-blue-600 text-white rounded-full p-1 shadow-md hover:bg-blue-700 transition"
-        >
-          {open ? <MdClose size={20} /> : <MdMenu size={20} />}
-        </button>
-
-        {/* Información del Docente */}
-        <div className="flex items-center mb-8 border-b pb-5">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/3135/3135755.png"
-            className="w-12 h-12 rounded-full border"
-            alt="Avatar"
-          />
+          {/* Footer del sidebar - MEJORADO */}
           {open && (
-            <div className="ml-3">
-              <h2 className="text-xl font-bold text-blue-700">
-                {docente ? docente.nombre : "Cargando..."}
-              </h2>
-              <p className="text-gray-500 text-sm">{docente?.apellido}</p>
+            <div className="p-6 mt-4 animate-slideIn">
+              
             </div>
           )}
-        </div>
+        </aside>
 
-        {/* Opciones */}
-        <ul className="space-y-3">
-          {opciones.map((opc, index) => {
-            const activo = location.pathname.includes(opc.ruta);
+        {/* Contenido principal - FONDO BLANCO Y LIMPIO */}
+        <main
+          className={`
+            transition-all duration-300 min-h-screen
+            p-6
+            ${open ? "md:ml-72" : "md:ml-20"}
+            ml-0
+          `}
+        >
+          {/* Breadcrumb y Título - MEJORADO */}
+          <div className="mb-6 animate-fadeIn">
+            <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
+              <span className="text-slate-400">Panel Docente</span>
+              <MdChevronRight size={16} className="text-slate-400" />
+              <span className="text-purple-600 font-semibold">{getTituloActual()}</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+              {getTituloActual()}
+            </h1>
+            <div className="h-1 w-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+          </div>
 
-            return (
-              <li
-                key={index}
-                onClick={() => navigate(opc.ruta)}
-                className={`
-                  flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all
-                  ${activo ? "bg-blue-100 border-l-4 border-blue-600" : "hover:bg-gray-100"}
-                `}
-              >
-                <span
-                  className={`transition ${
-                    activo ? "text-blue-700 scale-110" : "text-blue-600"
-                  }`}
-                >
-                  {opc.icono}
-                </span>
-                {open && (
-                  <span
-                    className={`font-medium transition ${
-                      activo ? "text-blue-700" : "text-gray-700"
-                    }`}
-                  >
-                    {opc.titulo}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-
-          {/* Logout */}
-          <li
-            onClick={handleLogout}
-            className="flex items-center gap-3 p-3 mt-6 rounded-xl cursor-pointer hover:bg-red-100 transition"
-          >
-            <MdLogout size={24} className="text-red-600" />
-            {open && <span className="font-medium text-red-600">Cerrar sesión</span>}
-          </li>
-        </ul>
+          {/* Contenedor blanco con sombra profesional */}
+          <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 p-6 md:p-8 min-h-[calc(100vh-12rem)] border border-slate-100 animate-fadeIn">
+            <Outlet />
+          </div>
+        </main>
       </div>
-
-      {/* ======================= CONTENIDO ======================= */}
-      <div className="flex-1 p-8">
-        <Outlet />
-      </div>
-    </div>
+    </>
   );
 }

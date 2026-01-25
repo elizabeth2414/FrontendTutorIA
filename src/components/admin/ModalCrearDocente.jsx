@@ -1,7 +1,7 @@
 import { useState } from "react";
-import Swal from "sweetalert2";
+import { MdClose, MdPerson, MdEmail, MdLock, MdSchool, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import { crearDocenteAdmin } from "../../services/adminService";
-import { MdVisibility, MdVisibilityOff } from "react-icons/md";
+import Swal from "sweetalert2";
 
 export default function ModalCrearDocente({ open, onClose, onCreated }) {
   const [form, setForm] = useState({
@@ -10,239 +10,342 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
     email: "",
     password: "",
     especialidad: "",
-    grado_academico: "",
-    institucion: "",
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  if (!open) return null;
+  const validate = () => {
+    const newErrors = {};
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    // Nombre
+    if (!form.nombre.trim()) {
+      newErrors.nombre = "El nombre es obligatorio";
+    } else if (form.nombre.trim().length < 2) {
+      newErrors.nombre = "El nombre debe tener al menos 2 caracteres";
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(form.nombre)) {
+      newErrors.nombre = "El nombre solo puede contener letras";
+    }
 
-  // Validaciones
-  const validar = () => {
-    let temp = {};
-    const soloLetras = /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/;
-    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const soloLetrasOpc = /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]*$/;
+    // Apellido
+    if (!form.apellido.trim()) {
+      newErrors.apellido = "El apellido es obligatorio";
+    } else if (form.apellido.trim().length < 2) {
+      newErrors.apellido = "El apellido debe tener al menos 2 caracteres";
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(form.apellido)) {
+      newErrors.apellido = "El apellido solo puede contener letras";
+    }
 
-    if (!form.nombre.trim()) temp.nombre = "El nombre es obligatorio.";
-    else if (!soloLetras.test(form.nombre))
-      temp.nombre = "Solo se permiten letras.";
+    // Email
+    if (!form.email.trim()) {
+      newErrors.email = "El email es obligatorio";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = "El email no es válido";
+    }
 
-    if (!form.apellido.trim()) temp.apellido = "El apellido es obligatorio.";
-    else if (!soloLetras.test(form.apellido))
-      temp.apellido = "Solo se permiten letras.";
+    // Password
+    if (!form.password) {
+      newErrors.password = "La contraseña es obligatoria";
+    } else if (form.password.length < 6) {
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
+    }
 
-    if (!form.email.trim()) temp.email = "El correo es obligatorio.";
-    else if (!emailValido.test(form.email))
-      temp.email = "Formato de correo inválido.";
+    // Especialidad (opcional pero si se ingresa debe ser válida)
+    if (form.especialidad && form.especialidad.trim().length < 3) {
+      newErrors.especialidad = "La especialidad debe tener al menos 3 caracteres";
+    }
 
-    if (!form.password.trim()) temp.password = "La contraseña es obligatoria.";
-    else if (form.password.length < 6)
-      temp.password = "Debe tener mínimo 6 caracteres.";
-
-    if (form.especialidad && !soloLetrasOpc.test(form.especialidad))
-      temp.especialidad = "Solo se permiten letras.";
-
-    if (form.grado_academico && !soloLetrasOpc.test(form.grado_academico))
-      temp.grado_academico = "Solo se permiten letras.";
-
-    if (form.institucion && !soloLetrasOpc.test(form.institucion))
-      temp.institucion = "Solo se permiten letras.";
-
-    setErrors(temp);
-    return Object.keys(temp).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validar()) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      Swal.fire({
+        title: "Formulario incompleto",
+        text: "Por favor corrige los errores antes de continuar",
+        icon: "warning",
+        confirmButtonColor: "#f97316",
+      });
+      return;
+    }
+
+    setLoading(true);
 
     try {
       await crearDocenteAdmin(form);
-      Swal.fire("Éxito", "Docente creado correctamente", "success");
-      onCreated();
+      
+      // Limpiar formulario
+      setForm({
+        nombre: "",
+        apellido: "",
+        email: "",
+        password: "",
+        especialidad: "",
+      });
+      setErrors({});
+      setShowPassword(false);
+      
+      // PRIMERO recargar la lista
+      await onCreated();
+      
+      // LUEGO cerrar el modal
       onClose();
+      
+      // FINALMENTE mostrar mensaje de éxito
+      Swal.fire({
+        title: "¡Docente Creado!",
+        text: "El docente ha sido registrado exitosamente",
+        icon: "success",
+        confirmButtonColor: "#f97316",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } catch (error) {
-      Swal.fire(
-        "Error",
-        error.response?.data?.detail || "No se pudo crear el docente.",
-        "error"
-      );
+      console.error("Error creando docente:", error);
+      
+      let errorMessage = "No se pudo crear el docente";
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.status === 400) {
+        errorMessage = "El email ya está registrado en el sistema";
+      }
+
+      Swal.fire({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonColor: "#f97316",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    
+    // Limpiar error del campo cuando el usuario empieza a escribir
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+  };
+
+  if (!open) return null;
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        
+        .modal-overlay {
+          font-family: 'Poppins', sans-serif;
+        }
+      `}</style>
 
-      {/* CARD */}
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl border border-gray-200 
-                      max-h-[85vh] flex flex-col">
+      {/* Overlay */}
+      <div
+        className="modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+        onClick={onClose}
+      >
+        {/* Modal */}
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-600 p-6 rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Crear Docente</h2>
+                <p className="text-orange-100 text-sm">Registra un nuevo profesor</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all"
+                disabled={loading}
+              >
+                <MdClose size={24} className="text-white" />
+              </button>
+            </div>
+          </div>
 
-        {/* HEADER */}
-        <div className="px-7 pt-6 pb-3 border-b border-gray-200">
-          <h2 className="text-2xl font-extrabold text-blue-700">
-            Crear Docente
-          </h2>
-        </div>
-
-        {/* CONTENT SCROLLEABLE */}
-        <div className="px-7 py-5 overflow-y-auto">
-
-          <div className="grid grid-cols-2 gap-5">
-
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {/* Nombre */}
             <div>
-              <label className="block text-gray-700 font-semibold">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Nombre <span className="text-red-500">*</span>
               </label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="nombre"
-                value={form.nombre}
-                onChange={handleChange}
-                placeholder="Nombre"
-              />
-              {errors.nombre && <p className="text-red-600 text-sm mt-1">{errors.nombre}</p>}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500">
+                  <MdPerson size={20} />
+                </div>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.nombre
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-orange-500"
+                  }`}
+                  placeholder="Ej: Juan"
+                  disabled={loading}
+                />
+              </div>
+              {errors.nombre && (
+                <p className="text-red-500 text-xs mt-1">{errors.nombre}</p>
+              )}
             </div>
 
             {/* Apellido */}
             <div>
-              <label className="block text-gray-700 font-semibold">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Apellido <span className="text-red-500">*</span>
               </label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="apellido"
-                value={form.apellido}
-                onChange={handleChange}
-                placeholder="Apellido"
-              />
-              {errors.apellido && <p className="text-red-600 text-sm mt-1">{errors.apellido}</p>}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500">
+                  <MdPerson size={20} />
+                </div>
+                <input
+                  type="text"
+                  name="apellido"
+                  value={form.apellido}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.apellido
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-orange-500"
+                  }`}
+                  placeholder="Ej: Pérez"
+                  disabled={loading}
+                />
+              </div>
+              {errors.apellido && (
+                <p className="text-red-500 text-xs mt-1">{errors.apellido}</p>
+              )}
             </div>
 
             {/* Email */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">
-                Correo Electrónico <span className="text-red-500">*</span>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Email <span className="text-red-500">*</span>
               </label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-purple-300 outline-none"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="correo@ejemplo.com"
-              />
-              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500">
+                  <MdEmail size={20} />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.email
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-orange-500"
+                  }`}
+                  placeholder="Ej: docente@escuela.com"
+                  disabled={loading}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
 
-            {/* Password con ojito */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Contraseña <span className="text-red-500">*</span>
               </label>
-
               <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500">
+                  <MdLock size={20} />
+                </div>
                 <input
-                  className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                             focus:ring-4 focus:ring-purple-300 outline-none pr-12"
-                  name="password"
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   value={form.password}
                   onChange={handleChange}
-                  placeholder="********"
+                  className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.password
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-orange-500"
+                  }`}
+                  placeholder="Mínimo 6 caracteres"
+                  disabled={loading}
                 />
-
-                {/* Ojito */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-500 transition-colors"
+                  disabled={loading}
                 >
-                  {showPassword ? <MdVisibilityOff size={22} /> : <MdVisibility size={22} />}
+                  {showPassword ? <MdVisibilityOff size={20} /> : <MdVisibility size={20} />}
                 </button>
               </div>
-
-              {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
             </div>
 
             {/* Especialidad */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">Especialidad</label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="especialidad"
-                value={form.especialidad}
-                onChange={handleChange}
-                placeholder="Lengua, Matemáticas, etc."
-              />
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Especialidad (opcional)
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500">
+                  <MdSchool size={20} />
+                </div>
+                <input
+                  type="text"
+                  name="especialidad"
+                  value={form.especialidad}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.especialidad
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-orange-500"
+                  }`}
+                  placeholder="Ej: Matemáticas"
+                  disabled={loading}
+                />
+              </div>
               {errors.especialidad && (
-                <p className="text-red-600 text-sm mt-1">{errors.especialidad}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.especialidad}</p>
               )}
             </div>
 
-            {/* Grado Académico */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">Grado Académico</label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="grado_academico"
-                value={form.grado_academico}
-                onChange={handleChange}
-                placeholder="Licenciatura / Maestría"
-              />
-              {errors.grado_academico && (
-                <p className="text-red-600 text-sm mt-1">{errors.grado_academico}</p>
-              )}
+            {/* Botones */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-all"
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:via-amber-600 hover:to-yellow-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                {loading ? "Creando..." : "Crear Docente"}
+              </button>
             </div>
-
-            {/* Institución */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">Institución</label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="institucion"
-                value={form.institucion}
-                onChange={handleChange}
-                placeholder="Universidad del Azuay"
-              />
-              {errors.institucion && (
-                <p className="text-red-600 text-sm mt-1">{errors.institucion}</p>
-              )}
-            </div>
-
-          </div>
+          </form>
         </div>
-
-        {/* FOOTER */}
-        <div className="px-7 py-4 border-t border-gray-200 flex justify-end gap-3 bg-white">
-          <button
-            className="px-5 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 transition font-semibold"
-            onClick={onClose}
-          >
-            Cancelar
-          </button>
-
-          <button
-            className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 transition font-semibold shadow-md"
-            onClick={handleSubmit}
-          >
-            Guardar
-          </button>
-        </div>
-
       </div>
-
-    </div>
+    </>
   );
 }

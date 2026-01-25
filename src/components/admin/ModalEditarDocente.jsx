@@ -1,159 +1,314 @@
 import { useState, useEffect } from "react";
-import Swal from "sweetalert2";
+import { MdClose, MdPerson, MdEmail, MdSchool } from "react-icons/md";
 import { actualizarDocenteAdmin } from "../../services/adminService";
+import Swal from "sweetalert2";
 
-export default function ModalEditarDocente({ open, onClose, docente, onUpdated }) {
+export default function ModalEditarDocente({ open, docente, onClose, onUpdated }) {
   const [form, setForm] = useState({
+    nombre: "",
+    apellido: "",
+    email: "",
     especialidad: "",
-    grado_academico: "",
-    institucion: "",
-    activo: true,
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (docente) {
+    if (docente && open) {
       setForm({
+        nombre: docente.usuario.nombre || "",
+        apellido: docente.usuario.apellido || "",
+        email: docente.usuario.email || "",
         especialidad: docente.especialidad || "",
-        grado_academico: docente.grado_academico || "",
-        institucion: docente.institucion || "",
-        activo: docente.activo,
       });
+      setErrors({});
     }
-  }, [docente]);
+  }, [docente, open]);
 
-  if (!open) return null;
+  const validate = () => {
+    const newErrors = {};
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    // Nombre
+    if (!form.nombre.trim()) {
+      newErrors.nombre = "El nombre es obligatorio";
+    } else if (form.nombre.trim().length < 2) {
+      newErrors.nombre = "El nombre debe tener al menos 2 caracteres";
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(form.nombre)) {
+      newErrors.nombre = "El nombre solo puede contener letras";
+    }
 
-  // Validaciones
-  const validar = () => {
-    let temp = {};
-    const soloLetras = /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]*$/;
+    // Apellido
+    if (!form.apellido.trim()) {
+      newErrors.apellido = "El apellido es obligatorio";
+    } else if (form.apellido.trim().length < 2) {
+      newErrors.apellido = "El apellido debe tener al menos 2 caracteres";
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(form.apellido)) {
+      newErrors.apellido = "El apellido solo puede contener letras";
+    }
 
-    if (form.especialidad && !soloLetras.test(form.especialidad))
-      temp.especialidad = "Solo se permiten letras.";
+    // Email
+    if (!form.email.trim()) {
+      newErrors.email = "El email es obligatorio";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = "El email no es válido";
+    }
 
-    if (form.grado_academico && !soloLetras.test(form.grado_academico))
-      temp.grado_academico = "Solo se permiten letras.";
+    // Especialidad (opcional pero si se ingresa debe ser válida)
+    if (form.especialidad && form.especialidad.trim().length < 3) {
+      newErrors.especialidad = "La especialidad debe tener al menos 3 caracteres";
+    }
 
-    if (form.institucion && !soloLetras.test(form.institucion))
-      temp.institucion = "Solo se permiten letras.";
-
-    setErrors(temp);
-
-    return Object.keys(temp).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validar()) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      Swal.fire({
+        title: "Formulario incompleto",
+        text: "Por favor corrige los errores antes de continuar",
+        icon: "warning",
+        confirmButtonColor: "#f97316",
+      });
+      return;
+    }
+
+    setLoading(true);
 
     try {
       await actualizarDocenteAdmin(docente.id, form);
-      Swal.fire("Actualizado", "Docente actualizado correctamente", "success");
-      onUpdated();
+      
+      // PRIMERO recargar la lista
+      await onUpdated();
+      
+      // LUEGO cerrar el modal
       onClose();
+      
+      // FINALMENTE mostrar mensaje de éxito
+      Swal.fire({
+        title: "¡Docente Actualizado!",
+        text: "Los datos del docente han sido actualizados exitosamente",
+        icon: "success",
+        confirmButtonColor: "#f97316",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } catch (error) {
-      Swal.fire("Error", "No se pudo actualizar el docente", "error");
+      console.error("Error actualizando docente:", error);
+      
+      let errorMessage = "No se pudo actualizar el docente";
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.status === 400) {
+        errorMessage = "El email ya está registrado en el sistema";
+      }
+
+      Swal.fire({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonColor: "#f97316",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    
+    // Limpiar error del campo cuando el usuario empieza a escribir
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+  };
+
+  if (!open || !docente) return null;
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        
+        .modal-overlay {
+          font-family: 'Poppins', sans-serif;
+        }
+      `}</style>
 
-      {/* CARD */}
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl border border-gray-200 
-                      max-h-[85vh] flex flex-col">
+      {/* Overlay */}
+      <div
+        className="modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+        onClick={onClose}
+      >
+        {/* Modal */}
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-600 p-6 rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Editar Docente</h2>
+                <p className="text-amber-100 text-sm">Actualiza los datos del profesor</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all"
+                disabled={loading}
+              >
+                <MdClose size={24} className="text-white" />
+              </button>
+            </div>
+          </div>
 
-        {/* HEADER */}
-        <div className="px-7 pt-6 pb-3 border-b border-gray-200">
-          <h2 className="text-2xl font-extrabold text-blue-700">
-            Editar Docente
-          </h2>
-        </div>
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Nombre */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Nombre <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500">
+                  <MdPerson size={20} />
+                </div>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.nombre
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-amber-500"
+                  }`}
+                  placeholder="Ej: Juan"
+                  disabled={loading}
+                />
+              </div>
+              {errors.nombre && (
+                <p className="text-red-500 text-xs mt-1">{errors.nombre}</p>
+              )}
+            </div>
 
-        {/* CONTENIDO SCROLLEABLE */}
-        <div className="px-7 py-6 overflow-y-auto">
+            {/* Apellido */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Apellido <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500">
+                  <MdPerson size={20} />
+                </div>
+                <input
+                  type="text"
+                  name="apellido"
+                  value={form.apellido}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.apellido
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-amber-500"
+                  }`}
+                  placeholder="Ej: Pérez"
+                  disabled={loading}
+                />
+              </div>
+              {errors.apellido && (
+                <p className="text-red-500 text-xs mt-1">{errors.apellido}</p>
+              )}
+            </div>
 
-          <div className="grid grid-cols-2 gap-6">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500">
+                  <MdEmail size={20} />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.email
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-amber-500"
+                  }`}
+                  placeholder="Ej: docente@escuela.com"
+                  disabled={loading}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
+            </div>
 
             {/* Especialidad */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">
-                Especialidad
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Especialidad (opcional)
               </label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="especialidad"
-                value={form.especialidad}
-                onChange={handleChange}
-                placeholder="Ej: Lengua y Literatura"
-              />
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500">
+                  <MdSchool size={20} />
+                </div>
+                <input
+                  type="text"
+                  name="especialidad"
+                  value={form.especialidad}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    errors.especialidad
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-slate-300 focus:ring-amber-500"
+                  }`}
+                  placeholder="Ej: Matemáticas"
+                  disabled={loading}
+                />
+              </div>
               {errors.especialidad && (
-                <p className="text-red-600 text-sm mt-1">{errors.especialidad}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.especialidad}</p>
               )}
             </div>
 
-            {/* Grado Académico */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">
-                Grado Académico
-              </label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="grado_academico"
-                value={form.grado_academico}
-                onChange={handleChange}
-                placeholder="Ej: Licenciatura / Maestría"
-              />
-              {errors.grado_academico && (
-                <p className="text-red-600 text-sm mt-1">{errors.grado_academico}</p>
-              )}
+            {/* Info adicional */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+              <p className="text-xs text-slate-600">
+                <span className="font-semibold text-amber-700">Nota:</span> La contraseña no se puede modificar desde aquí. Si el docente necesita cambiar su contraseña, deberá hacerlo desde su perfil.
+              </p>
             </div>
 
-            {/* Institución */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 font-semibold">
-                Institución
-              </label>
-              <input
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-gray-300 bg-white/70 
-                           focus:ring-4 focus:ring-blue-300 outline-none"
-                name="institucion"
-                value={form.institucion}
-                onChange={handleChange}
-                placeholder="Ej: Universidad del Azuay"
-              />
-              {errors.institucion && (
-                <p className="text-red-600 text-sm mt-1">{errors.institucion}</p>
-              )}
+            {/* Botones */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-all"
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-600 text-white rounded-xl font-semibold hover:from-amber-600 hover:via-orange-600 hover:to-yellow-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                {loading ? "Actualizando..." : "Actualizar"}
+              </button>
             </div>
-
-          </div>
+          </form>
         </div>
-
-        {/* FOOTER */}
-        <div className="px-7 py-4 border-t border-gray-200 flex justify-end gap-3 bg-white">
-          <button
-            className="px-5 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 transition font-semibold"
-            onClick={onClose}
-          >
-            Cancelar
-          </button>
-
-          <button
-            className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 transition font-semibold shadow-md"
-            onClick={handleSubmit}
-          >
-            Actualizar
-          </button>
-        </div>
-
       </div>
-    </div>
+    </>
   );
 }
