@@ -10,6 +10,7 @@ import Contacto from "./pages/info/Contacto.jsx";
 import VerificarEmail from "./pages/auth/VerificarEmail.jsx";
 import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/auth/ResetPassword.jsx";
+import ConfigurarCuenta from "./pages/auth/ConfigurarCuenta.jsx"
 
 import MenuDocente from "./pages/docente/MenuDocente.jsx";
 import DashboardDocente from "./pages/docente/DashboardDocente.jsx";
@@ -58,7 +59,7 @@ function App() {
       <Route path="/verificar-email" element={<VerificarEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-
+      <Route path="/configurar-cuenta" element={<ConfigurarCuenta />} />
 
       {/* ===================== PRIVADAS - DOCENTE ===================== */}
       <Route path="/docente/menu" element={<MenuDocente />}>

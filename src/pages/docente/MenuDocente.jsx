@@ -201,7 +201,7 @@ export default function MenuDocente() {
             <div className="p-5 mt-4">
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl text-center border border-purple-100">
                 <p className="text-xs text-slate-600 font-medium">BookiSmartIA • Docentes</p>
-                <p className="text-xs text-slate-400 mt-1">v1.0.0</p>
+                <p className="text-xs text-slate-400 mt-1">2026</p>
               </div>
             </div>
           </div>

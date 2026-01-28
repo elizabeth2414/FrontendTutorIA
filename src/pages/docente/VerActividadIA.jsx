@@ -1,5 +1,3 @@
-// src/pages/docente/VerActividadIA.jsx
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -20,9 +18,7 @@ export default function VerActividadIA() {
   const [actividad, setActividad] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ================================
-  // Cargar actividad al entrar
-  // ================================
+ 
   useEffect(() => {
     cargarActividad();
   }, []);

@@ -131,6 +131,13 @@ export default function Login() {
         setErrorMsg("Tu cuenta de docente está deshabilitada. Contacta al administrador del sistema.");
         setErrorType("warning");
       }
+      else if (status === 403 && message.toLowerCase().includes("verifica")) {
+      setErrorMsg(
+       "Tu correo aún no está verificado. Si eres docente, revisa el correo de 'Configurar cuenta'."
+          );
+         setErrorType("info");
+       }
+
       // ✅ VALIDACIÓN 6: Credenciales incorrectas (401)
       else if (status === 401) {
         setErrorMsg("Correo o contraseña incorrectos. Verifica tus datos e intenta nuevamente.");

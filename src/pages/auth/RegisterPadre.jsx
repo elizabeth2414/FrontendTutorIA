@@ -5,6 +5,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { registrarPadre } from "../../services/authService";
 
+
 const RegisterPadre = () => {
   const navigate = useNavigate();
   const isMobile = Capacitor.isNativePlatform();
@@ -41,7 +42,7 @@ const RegisterPadre = () => {
     
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/auth/verificar-email?email=${encodeURIComponent(email)}`
+        `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/auth/verificar-email-disponible?email=${encodeURIComponent(email)}`
       );
       
       const data = await response.json();

@@ -14,9 +14,7 @@ export default function ActividadesGeneradas() {
   const [actividades, setActividades] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ================================
-  // Cargar actividades IA
-  // ================================
+
   useEffect(() => {
     cargarActividades();
   }, []);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MdClose, MdPerson, MdEmail, MdLock, MdSchool, MdVisibility, MdVisibilityOff } from "react-icons/md";
+import { MdClose, MdPerson, MdEmail, MdSchool } from "react-icons/md";
 import { crearDocenteAdmin } from "../../services/adminService";
 import Swal from "sweetalert2";
 
@@ -8,13 +8,11 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
     nombre: "",
     apellido: "",
     email: "",
-    password: "",
     especialidad: "",
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const validate = () => {
     const newErrors = {};
@@ -44,14 +42,7 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
       newErrors.email = "El email no es válido";
     }
 
-    // Password
-    if (!form.password) {
-      newErrors.password = "La contraseña es obligatoria";
-    } else if (form.password.length < 6) {
-      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
-    }
-
-    // Especialidad (opcional pero si se ingresa debe ser válida)
+    // Especialidad (opcional)
     if (form.especialidad && form.especialidad.trim().length < 3) {
       newErrors.especialidad = "La especialidad debe tener al menos 3 caracteres";
     }
@@ -76,39 +67,50 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
     setLoading(true);
 
     try {
-      await crearDocenteAdmin(form);
-      
+      // ✅ IMPORTANTE: ya NO enviamos password
+      const payload = {
+        nombre: form.nombre.trim(),
+        apellido: form.apellido.trim(),
+        email: form.email.trim().toLowerCase(),
+        especialidad: form.especialidad?.trim() || "",
+      };
+
+      await crearDocenteAdmin(payload);
+
       // Limpiar formulario
       setForm({
         nombre: "",
         apellido: "",
         email: "",
-        password: "",
         especialidad: "",
       });
       setErrors({});
-      setShowPassword(false);
-      
+
       // PRIMERO recargar la lista
       await onCreated();
-      
+
       // LUEGO cerrar el modal
       onClose();
-      
-      // FINALMENTE mostrar mensaje de éxito
+
+      // FINALMENTE mensaje éxito
       Swal.fire({
         title: "¡Docente Creado!",
-        text: "El docente ha sido registrado exitosamente",
+        html: `
+          <div style="text-align:left;">
+            <p style="margin:0 0 8px 0;">El docente ha sido registrado exitosamente.</p>
+            <p style="margin:0; color:#64748b; font-size:14px;">
+              📩 Se envió un correo al docente para <b>configurar su contraseña</b> y activar su cuenta.
+            </p>
+          </div>
+        `,
         icon: "success",
         confirmButtonColor: "#f97316",
-        timer: 2000,
-        showConfirmButton: false,
       });
     } catch (error) {
       console.error("Error creando docente:", error);
-      
+
       let errorMessage = "No se pudo crear el docente";
-      
+
       if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
       } else if (error.response?.status === 400) {
@@ -129,8 +131,7 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    
-    // Limpiar error del campo cuando el usuario empieza a escribir
+
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
@@ -172,6 +173,14 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
               >
                 <MdClose size={24} className="text-white" />
               </button>
+            </div>
+          </div>
+
+          {/* Aviso */}
+          <div className="px-6 pt-5">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <b>📩 Configurar cuenta:</b> al crear el docente, se enviará un correo con un enlace para que
+              configure su contraseña y active su cuenta.
             </div>
           </div>
 
@@ -258,42 +267,6 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
               </div>
               {errors.email && (
                 <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Contraseña <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500">
-                  <MdLock size={20} />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
-                    errors.password
-                      ? "border-red-300 focus:ring-red-500"
-                      : "border-slate-300 focus:ring-orange-500"
-                  }`}
-                  placeholder="Mínimo 6 caracteres"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-500 transition-colors"
-                  disabled={loading}
-                >
-                  {showPassword ? <MdVisibilityOff size={20} /> : <MdVisibility size={20} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
               )}
             </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { MdClose, MdColorLens, MdCheckCircle, MdError, MdEdit } from "react-icons/md";
+import { MdClose, MdColorLens, MdEdit } from "react-icons/md";
+import Swal from "sweetalert2";
 import { actualizarCategoria } from "../../services/categoriasService";
 
 export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) {
@@ -10,7 +11,7 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
     descripcion: "",
     edad_minima: 7,
     edad_maxima: 10,
-    color: "#3B82F6",
+    color: "#9333ea",
     icono: "",
   });
 
@@ -18,11 +19,6 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
     nombre: "",
     edad: "",
   });
-
-  // Modal de resultado
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [resultType, setResultType] = useState(""); // 'success' o 'error'
-  const [resultMessage, setResultMessage] = useState("");
 
   // Cargar datos de la categoría al montar
   useEffect(() => {
@@ -32,7 +28,7 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
         descripcion: categoria.descripcion || "",
         edad_minima: categoria.edad_minima || 7,
         edad_maxima: categoria.edad_maxima || 10,
-        color: categoria.color || "#3B82F6",
+        color: categoria.color || "#9333ea",
         icono: categoria.icono || "",
       });
     }
@@ -84,30 +80,42 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
 
     // Validaciones finales
     if (!form.nombre.trim()) {
-      setResultType("error");
-      setResultMessage("El nombre es obligatorio.");
-      setShowResultModal(true);
+      Swal.fire({
+        title: "Campo requerido",
+        text: "El nombre es obligatorio.",
+        icon: "warning",
+        confirmButtonColor: "#9333ea",
+      });
       return;
     }
 
     if (form.nombre.trim().length < 3) {
-      setResultType("error");
-      setResultMessage("El nombre debe tener al menos 3 caracteres.");
-      setShowResultModal(true);
+      Swal.fire({
+        title: "Nombre muy corto",
+        text: "El nombre debe tener al menos 3 caracteres.",
+        icon: "warning",
+        confirmButtonColor: "#9333ea",
+      });
       return;
     }
 
     if (form.edad_minima > form.edad_maxima) {
-      setResultType("error");
-      setResultMessage("La edad mínima no puede ser mayor que la edad máxima.");
-      setShowResultModal(true);
+      Swal.fire({
+        title: "Error en edades",
+        text: "La edad mínima no puede ser mayor que la edad máxima.",
+        icon: "warning",
+        confirmButtonColor: "#9333ea",
+      });
       return;
     }
 
     if (errors.nombre || errors.edad) {
-      setResultType("error");
-      setResultMessage("Por favor corrige los errores antes de guardar.");
-      setShowResultModal(true);
+      Swal.fire({
+        title: "Error de validación",
+        text: "Por favor corrige los errores antes de guardar.",
+        icon: "warning",
+        confirmButtonColor: "#9333ea",
+      });
       return;
     }
 
@@ -116,60 +124,78 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
     try {
       await actualizarCategoria(categoria.id, form);
       
-      setResultType("success");
-      setResultMessage("Categoría actualizada exitosamente");
-      setShowResultModal(true);
+      await Swal.fire({
+        title: "¡Categoría actualizada!",
+        text: "Los cambios han sido guardados exitosamente",
+        icon: "success",
+        confirmButtonColor: "#9333ea",
+        timer: 2000,
+        showConfirmButton: false,
+      });
 
-      // Esperar un momento antes de cerrar
-      setTimeout(() => {
-        onUpdated();
-        onClose();
-      }, 1500);
+      onUpdated();
+      onClose();
 
     } catch (err) {
       console.error(err);
       setSaving(false);
-      setResultType("error");
-      setResultMessage("Error al actualizar la categoría. Intenta nuevamente.");
-      setShowResultModal(true);
+      
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo actualizar la categoría. Intenta nuevamente.",
+        icon: "error",
+        confirmButtonColor: "#9333ea",
+      });
     }
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
         
         * {
-          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
         h1, h2, h3, h4, h5, h6 {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Fredoka', 'Poppins', sans-serif;
+        }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
         }
       `}</style>
 
       {/* MODAL PRINCIPAL */}
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto animate-slideIn">
           
-          {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-slate-200 sticky top-0 bg-white rounded-t-2xl z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-                <MdEdit className="text-yellow-700" size={20} />
+          {/* Header con gradiente violeta */}
+          <div className="relative overflow-hidden sticky top-0 bg-white z-10 rounded-t-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-600 opacity-10"></div>
+            <div className="relative flex items-center justify-between p-5 border-b border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <MdEdit className="text-white" size={20} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Editar Categoría
+                </h2>
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Editar Categoría
-              </h2>
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-slate-100 rounded-lg transition"
+                disabled={saving}
+              >
+                <MdClose size={24} className="text-slate-600" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-slate-100 rounded-lg transition"
-              disabled={saving}
-            >
-              <MdClose size={24} />
-            </button>
           </div>
 
           {/* Contenido */}
@@ -181,7 +207,7 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Vista Previa
                 </label>
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border-2 border-slate-200">
+                <div className="bg-gradient-to-br from-purple-50 via-violet-50 to-fuchsia-50 rounded-xl p-4 border-2 border-purple-100">
                   <div className="flex items-center gap-4">
                     <div
                       className="w-16 h-16 rounded-xl shadow-lg flex items-center justify-center text-3xl transition-all"
@@ -218,15 +244,14 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
                   onChange={handleChange}
                   placeholder="Ej: Lecturas Básicas"
                   disabled={saving}
-                  className={`w-full px-4 py-2.5 rounded-lg border-2 outline-none transition ${
+                  className={`w-full px-4 py-2.5 rounded-xl border-2 outline-none transition ${
                     errors.nombre
-                      ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                      : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+                      : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                   } disabled:bg-slate-50 disabled:cursor-not-allowed`}
                 />
                 {errors.nombre && (
-                  <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
-                    <MdError size={14} />
+                  <p className="text-red-600 text-xs mt-2 ml-1">
                     {errors.nombre}
                   </p>
                 )}
@@ -244,7 +269,7 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
                   rows="2"
                   placeholder="Descripción breve de la categoría..."
                   disabled={saving}
-                  className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition resize-none disabled:bg-slate-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition resize-none disabled:bg-slate-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -261,7 +286,7 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
                   min={7}
                   max={10}
                   disabled={saving}
-                  className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -278,15 +303,14 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
                   min={7}
                   max={10}
                   disabled={saving}
-                  className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed"
                 />
               </div>
 
               {/* Error de edad */}
               {errors.edad && (
                 <div className="md:col-span-2">
-                  <p className="text-red-600 text-sm flex items-center gap-2 bg-red-50 rounded-lg p-2">
-                    <MdError size={18} />
+                  <p className="text-red-600 text-sm bg-red-50 rounded-lg p-3">
                     {errors.edad}
                   </p>
                 </div>
@@ -295,7 +319,7 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
               {/* Color */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                  <MdColorLens size={18} />
+                  <MdColorLens size={18} className="text-purple-500" />
                   Color <span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center gap-3">
@@ -305,9 +329,9 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
                     value={form.color}
                     onChange={handleChange}
                     disabled={saving}
-                    className="w-16 h-12 rounded-lg border-2 border-slate-200 cursor-pointer shadow-sm disabled:cursor-not-allowed"
+                    className="w-16 h-12 rounded-xl border-2 border-slate-200 cursor-pointer shadow-sm disabled:cursor-not-allowed"
                   />
-                  <div className="flex-1 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 font-mono text-sm">
+                  <div className="flex-1 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-mono text-sm">
                     {form.color}
                   </div>
                 </div>
@@ -326,76 +350,42 @@ export default function ModalEditarCategoria({ categoria, onClose, onUpdated }) 
                   placeholder="📚"
                   maxLength={2}
                   disabled={saving}
-                  className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed text-center text-2xl"
+                  className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition disabled:bg-slate-50 disabled:cursor-not-allowed text-center text-2xl"
                 />
                 <p className="text-xs text-slate-500 mt-1">Usa un emoji como icono</p>
               </div>
             </div>
 
             {/* Footer con botones */}
-            <div className="flex gap-3 pt-5 mt-5 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={saving}
-                className="flex-1 px-4 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={saving || !form.nombre.trim() || errors.nombre || errors.edad}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
-              >
-                {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    Guardando...
-                  </span>
-                ) : (
-                  "Guardar Cambios"
-                )}
-              </button>
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 -mx-5 -mb-5 px-5 py-5 mt-5">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={saving}
+                  className="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || !form.nombre.trim() || errors.nombre || errors.edad}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold hover:from-violet-600 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  {saving ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Guardando...
+                    </span>
+                  ) : (
+                    "Guardar Cambios"
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
       </div>
-
-      {/* MODAL DE RESULTADO */}
-      {showResultModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <div className="flex flex-col items-center text-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                resultType === 'success' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-                {resultType === 'success' ? (
-                  <MdCheckCircle className="text-green-600" size={32} />
-                ) : (
-                  <MdError className="text-red-600" size={32} />
-                )}
-              </div>
-              
-              <h3 className="text-lg font-bold text-slate-900 mb-2">
-                {resultType === 'success' ? '¡Éxito!' : 'Error'}
-              </h3>
-              
-              <p className="text-slate-600 mb-6">
-                {resultMessage}
-              </p>
-
-              {resultType === 'error' && (
-                <button
-                  onClick={() => setShowResultModal(false)}
-                  className="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
-                >
-                  Cerrar
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
