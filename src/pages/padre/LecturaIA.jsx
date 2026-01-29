@@ -183,7 +183,44 @@ export default function LecturaIAHijo() {
   };
 
   // ==========================
-  // Grabación lectura
+  // ✅ Enviar lectura a IA (FIX: enviar cuando el blob exista)
+  // ==========================
+  const manejarEnviar = async (archivoParam = null) => {
+    const archivoFinal = archivoParam || audioArchivo;
+
+    if (!hijoSeleccionado || !lecturaSeleccionada) {
+      setErrorMsg("Selecciona un estudiante y una lectura.");
+      return;
+    }
+    if (!archivoFinal || archivoFinal.size < 100) {
+      setErrorMsg("¡Ups! Parece que no se grabó nada. Intenta de nuevo. 🎤");
+      return;
+    }
+
+    setCargando(true);
+    setResultado(null);
+    setErrorMsg("");
+
+    try {
+      const data = await analizarLecturaIA({
+        estudianteId: hijoSeleccionado.id,
+        contenidoId: lecturaSeleccionada.id,
+        archivoAudio: archivoFinal,
+        evaluacionId,
+      });
+      setResultado(data);
+      if (data.evaluacion_id) setEvaluacionId(data.evaluacion_id);
+    } catch (e) {
+      setErrorMsg(
+        e.message || "No pudimos escuchar bien el audio. Intenta grabar nuevamente."
+      );
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // ==========================
+  // Grabación lectura (FIX: enviar en onstop)
   // ==========================
   const iniciarGrabacion = async () => {
     try {
@@ -203,11 +240,16 @@ export default function LecturaIAHijo() {
       const chunks = [];
 
       recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-      recorder.onstop = () => {
+
+      // ✅ Aquí el blob YA existe, así que aquí se envía
+      recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
         setAudioArchivo(blob);
         setAudioPreviewUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((t) => t.stop());
+
+        // ✅ Enviar SOLO cuando ya existe el blob
+        await manejarEnviar(blob);
       };
 
       recorder.start();
@@ -218,10 +260,10 @@ export default function LecturaIAHijo() {
     }
   };
 
+  // ✅ FIX: ya NO llamamos manejarEnviar aquí (porque todavía no existe el blob)
   const detenerGrabacion = () => {
     mediaRecorder?.stop();
     setGrabando(false);
-    manejarEnviar();
   };
 
   const manejarArchivo = (e) => {
@@ -231,41 +273,6 @@ export default function LecturaIAHijo() {
     setAudioArchivo(file);
     setAudioPreviewUrl(URL.createObjectURL(file));
     e.target.value = "";
-  };
-
-  // ==========================
-  // Enviar lectura a IA
-  // ==========================
-  const manejarEnviar = async () => {
-    if (!hijoSeleccionado || !lecturaSeleccionada) {
-      setErrorMsg("Selecciona un estudiante y una lectura.");
-      return;
-    }
-    if (!audioArchivo || audioArchivo.size < 100) {
-      setErrorMsg("¡Ups! Parece que no se grabó nada. Intenta de nuevo. 🎤");
-      return;
-    }
-
-    setCargando(true);
-    setResultado(null);
-    setErrorMsg("");
-
-    try {
-      const data = await analizarLecturaIA({
-        estudianteId: hijoSeleccionado.id,
-        contenidoId: lecturaSeleccionada.id,
-        archivoAudio: audioArchivo,
-        evaluacionId,
-      });
-      setResultado(data);
-      if (data.evaluacion_id) setEvaluacionId(data.evaluacion_id);
-    } catch (e) {
-      setErrorMsg(
-        e.message || "No pudimos escuchar bien el audio. Intenta grabar nuevamente."
-      );
-    } finally {
-      setCargando(false);
-    }
   };
 
   // ==========================
@@ -599,7 +606,7 @@ export default function LecturaIAHijo() {
 
             <button
               type="button"
-              onClick={manejarEnviar}
+              onClick={() => manejarEnviar(null)}
               disabled={!audioArchivo || cargando}
               className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-indigo-500 to-emerald-500 text-white text-sm font-extrabold shadow-md hover:shadow-lg hover:brightness-105 disabled:opacity-60 active:scale-[0.99] transition"
             >
