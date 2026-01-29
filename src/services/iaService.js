@@ -115,3 +115,41 @@ export const practicarEjercicioIA = async ({
     throw error;
   }
 };
+
+/**
+ * Analiza la pronunciación de una palabra individual
+ * Optimizado para práctica interactiva palabra por palabra
+ */
+export const analizarPalabraIndividual = async (palabra, audioBlob) => {
+  try {
+    if (!(audioBlob instanceof Blob) || audioBlob.size === 0) {
+      throw new Error("Audio de palabra inválido.");
+    }
+
+    const formData = new FormData();
+    formData.append("palabra_objetivo", palabra);
+    formData.append("audio", audioBlob, "palabra.webm");
+
+    const res = await axiosClient.post(
+      `${BASE_URL}/analizar-palabra-individual`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 60000,
+      }
+    );
+
+    Logger.api("POST /ia/analizar-palabra-individual", res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error al analizar palabra individual IA", error);
+
+    if (error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+
+    throw error;
+  }
+};

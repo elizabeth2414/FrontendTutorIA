@@ -142,3 +142,119 @@ export const getNiveles = async () => {
     throw error;
   }
 };
+
+// =======================================================
+// 11. OBTENER RESUMEN DE PROGRESO DE TODOS LOS ESTUDIANTES
+// =======================================================
+export const getResumenProgresoEstudiantes = async () => {
+  try {
+    const res = await axiosClient.get(`${BASE}/progreso/resumen`);
+    Logger.api("GET /docentes/progreso/resumen", res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo resumen de progreso", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 12. OBTENER PROGRESO DETALLADO DE UN ESTUDIANTE
+// =======================================================
+export const getProgresoDetalladoEstudiante = async (estudianteId) => {
+  try {
+    const res = await axiosClient.get(`${BASE}/progreso/estudiante/${estudianteId}`);
+    Logger.api(`GET /docentes/progreso/estudiante/${estudianteId}`, res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo progreso detallado del estudiante", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 13. OBTENER DATOS DE GRÁFICA DE PROGRESO DE UN ESTUDIANTE
+// =======================================================
+export const getGraficaProgresoEstudiante = async (estudianteId, periodo = "mes") => {
+  try {
+    const res = await axiosClient.get(
+      `${BASE}/progreso/estudiante/${estudianteId}/grafica-progreso?periodo=${periodo}`
+    );
+    Logger.api(`GET /docentes/progreso/estudiante/${estudianteId}/grafica-progreso`, res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo gráfica de progreso", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 14. OBTENER RESUMEN DE HISTORIAL DE PRÁCTICA
+// =======================================================
+export const getResumenHistorialPractica = async () => {
+  try {
+    const res = await axiosClient.get(`${BASE}/historial-practica/resumen`);
+    Logger.api("GET /docentes/historial-practica/resumen", res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo resumen de historial de práctica", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 15. OBTENER HISTORIAL DETALLADO DE PRÁCTICA DE UN ESTUDIANTE
+// =======================================================
+export const getHistorialPracticaDetallado = async (estudianteId) => {
+  try {
+    const res = await axiosClient.get(`${BASE}/historial-practica/estudiante/${estudianteId}`);
+    Logger.api(`GET /docentes/historial-practica/estudiante/${estudianteId}`, res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo historial detallado de práctica", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 16. OBTENER ESTADÍSTICAS DE TIEMPO DE PRÁCTICA
+// =======================================================
+export const getEstadisticasTiempoPractica = async (estudianteId, periodo = "mes") => {
+  try {
+    const res = await axiosClient.get(
+      `${BASE}/historial-practica/estudiante/${estudianteId}/estadisticas-tiempo?periodo=${periodo}`
+    );
+    Logger.api(`GET /docentes/historial-practica/estudiante/${estudianteId}/estadisticas-tiempo`, res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo estadísticas de tiempo de práctica", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 14. OBTENER HISTORIAL DE PRÁCTICA DE UN ESTUDIANTE
+// =======================================================
+export const getHistorialPracticaEstudiante = async (estudianteId) => {
+  try {
+    const res = await axiosClient.get(`/historial/practicas/estudiante/${estudianteId}`);
+    Logger.api(`GET /historial/practicas/estudiante/${estudianteId}`, res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo historial de práctica del estudiante", error);
+    throw error;
+  }
+};
+
+// =======================================================
+// 15. OBTENER HISTORIAL DE PRÁCTICA DETALLADO DE UN ESTUDIANTE
+// =======================================================
+export const getHistorialPracticaEstudianteDetallado = async (estudianteId) => {
+  try {
+    const res = await axiosClient.get(`/historial/practicas/estudiante/${estudianteId}/detallado`);
+    Logger.api(`GET /historial/practicas/estudiante/${estudianteId}/detallado`, res.data);
+    return res.data;
+  } catch (error) {
+    Logger.error("Error obteniendo historial de práctica detallado", error);
+    throw error;
+  }
+};

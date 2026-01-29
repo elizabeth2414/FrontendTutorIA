@@ -37,6 +37,8 @@ import ActividadesLectura from "./pages/docente/ActividadesLectura.jsx";
 import ActividadDetalle from "./components/actividades/ActividadDetalle.jsx";
 import ResolverActividad from "./pages/padre/ResolverActividad.jsx";
 import EditarCuentaPadre from "./pages/padre/Editarcuentapadre.jsx";
+import ProgresoEstudiantesDocente from "./pages/docente/ProgresoEstudiantesDocente.jsx";
+import ProgresoDetalladoEstudiante from "./pages/docente/ProgresoDetalladoEstudiante.jsx";
 
 // ADMIN
 import MenuAdmin from "./pages/admin/MenuAdmin.jsx";
@@ -70,6 +72,8 @@ function App() {
         <Route path="estudiantes" element={<EstudiantesDocente />} />
         <Route path="categorias" element={<CategoriasDocente />} />
         <Route path="lecturas" element={<LecturasDocente />} />
+        <Route path="progreso" element={<ProgresoEstudiantesDocente />} />
+        <Route path="progreso/:estudianteId" element={<ProgresoDetalladoEstudiante />} />
         <Route path="/docente/menu/lecturas/:lecturaId/actividades" element={<ActividadesLectura />} />
         <Route path="/docente/menu/actividades/:actividadId/detalle" element={<ActividadDetalle />} />
 
