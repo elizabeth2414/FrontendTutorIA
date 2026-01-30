@@ -2,6 +2,11 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
+// ✅ Opción 1: Importar imágenes para que Vite las incluya en dist (funciona en Capacitor)
+import profeImg from "../../assets/images/profeenseñando.png";
+import ninoImg from "../../assets/images/niñonocomprende.png";
+import padresImg from "../../assets/images/padresenseñando.png";
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -177,7 +182,7 @@ export default function Home() {
               <div className="flex justify-center lg:justify-end animate-slide-in-right">
                 <div className="relative w-full max-w-lg">
                   <img
-                    src="/src/assets/images/profeenseñando.png"
+                    src={profeImg}
                     alt="Maestra enseñando con BookiSmartIA"
                     className="w-full h-auto rounded-2xl md:rounded-3xl shadow-2xl hover-lift"
                   />
@@ -196,7 +201,7 @@ export default function Home() {
               <div className="flex justify-center order-1 lg:order-1 animate-scale-in">
                 <div className="relative w-full max-w-md">
                   <img
-                    src="/src/assets/images/niñonocomprende.png"
+                    src={ninoImg}
                     alt="Niño con dificultades en la lectura"
                     className="w-full h-auto rounded-2xl md:rounded-3xl shadow-2xl hover-lift"
                   />
@@ -335,7 +340,7 @@ export default function Home() {
                 accent: "bg-purple-500"
               },
               { 
-                icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+                icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 0 014 0z",
                 title: "Representante", 
                 desc: "Acompaño el aprendizaje de mi hijo, reviso sus avances y me mantengo informado de su progreso.",
                 color: "from-pink-400 to-rose-500",
@@ -377,7 +382,7 @@ export default function Home() {
           <div className="mt-12 md:mt-16 flex justify-center animate-scale-in stagger-4">
             <div className="relative w-full max-w-3xl">
               <img
-                src="/src/assets/images/padresenseñando.png"
+                src={padresImg}
                 alt="Familia usando BookiSmartIA"
                 className="w-full h-auto rounded-2xl md:rounded-3xl shadow-2xl hover-lift"
               />
@@ -408,9 +413,6 @@ export default function Home() {
                 {/* Contenedor del QR - Aquí pegarás tu código QR */}
                 <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-emerald-200/50">
                   <div className="w-48 h-48 md:w-64 md:h-64 flex items-center justify-center bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
-                    {/* AQUÍ VA TU CÓDIGO QR */}
-                    {/* Ejemplo: <img src="/qr-code.png" alt="QR Code" /> */}
-                    {/* O el código que genere el Play Store */}
                     <div className="text-center text-slate-400">
                       <svg className="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
@@ -450,9 +452,6 @@ export default function Home() {
         <section className="w-full max-w-5xl mt-16 md:mt-24 text-center">
           <div className="relative bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 rounded-2xl md:rounded-3xl p-8 md:p-12 lg:p-16 text-white shadow-2xl shadow-emerald-500/20 overflow-hidden">
             
-            {/* Efectos de fondo sutiles */}
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
-            
             <div className="relative z-10 space-y-6">
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
                 ¿Listo para transformar la<br className="hidden sm:block" /> experiencia de aprendizaje?
@@ -475,21 +474,6 @@ export default function Home() {
                 >
                   Conocer Más
                 </button>
-              </div>
-              
-              <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 pt-6 text-emerald-50 text-xs md:text-sm">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span>Sin tarjeta requerida</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span>Plan gratuito disponible</span>
-                </div>
               </div>
             </div>
           </div>
