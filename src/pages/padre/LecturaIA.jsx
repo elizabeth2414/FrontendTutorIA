@@ -501,7 +501,7 @@ export default function LecturaIAHijo() {
                   {lectura?.titulo ? `“${lectura.titulo}”` : "Toca el camaleón para elegir una lectura"}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Consejo: respira, separa sílabas y lee claro ⭐
+                  Consejo: respira, separa sílabas y lee claro
                 </p>
               </div>
             </div>

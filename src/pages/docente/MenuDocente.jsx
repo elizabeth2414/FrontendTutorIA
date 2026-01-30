@@ -8,6 +8,7 @@ import {
   MdSchool,
   MdPeople,
   MdLibraryBooks,
+  MdHistory,
   MdLogout,
   MdCategory,
   MdAutoStories,
@@ -32,6 +33,7 @@ export default function MenuDocente() {
     { titulo: "Categorías", icono: <MdCategory size={24} />, ruta: "categorias" },
     { titulo: "Lecturas", icono: <MdAutoStories size={24} />, ruta: "lecturas" },
     { titulo: "Progreso", icono: <MdLibraryBooks size={24} />, ruta: "progreso" },
+    { titulo: "Historial", icono: <MdHistory size={24} />, ruta: "historial" },
   ];
 
   useEffect(() => {

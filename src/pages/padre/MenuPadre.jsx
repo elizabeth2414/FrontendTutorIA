@@ -9,6 +9,7 @@ import {
   MdFamilyRestroom,
   MdLibraryBooks,
   MdAnalytics,
+  MdHistory,
   MdSettings,
   MdLogout,
   MdChevronRight,
@@ -30,6 +31,7 @@ export default function MenuPadre() {
     { titulo: "Mis Hijos", icono: <MdFamilyRestroom size={24} />, ruta: "hijos" },
     { titulo: "Actividades Asignadas", icono: <MdLibraryBooks size={24} />, ruta: "actividades" },
     { titulo: "Progreso", icono: <MdAnalytics size={24} />, ruta: "progreso" },
+    { titulo: "Historial", icono: <MdHistory size={24} />, ruta: "historial" },
     { titulo: "Configuración", icono: <MdSettings size={24} />, ruta: "configuracion" },
   ];
 

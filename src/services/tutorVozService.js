@@ -112,7 +112,6 @@ class TutorVozService {
       this._ultimoTexto = limpio;
       this._ultimoTS = ahora;
 
-      // ✅ Cancelar SOLO si está hablando o pendiente
       if (this.synthesis.speaking || this.synthesis.pending) {
         this.synthesis.cancel();
       }
@@ -152,12 +151,12 @@ class TutorVozService {
   }
 
   async saludar(nombreNino) {
-    const saludos = [`¡Hola ${nombreNino}!`, "¡Hola campeón!", `¡Hola ${nombreNino}! Qué alegría verte.`];
+    const saludos = [`¡Como estas el dia de hoy !`, "¡Hola !", `¡Hola ! Me siento feliz de verte .`];
     const saludo = saludos[Math.floor(Math.random() * saludos.length)];
 
     await this.hablar(saludo, { tono: 1.2 });
     await this.pausa(350);
-    await this.hablar("¿Listo para aprender juntos?", { tono: 1.15 });
+    await this.hablar("¿Estas listo para aprender juntos?", { tono: 1.15 });
   }
 
   async explicarPractica() {

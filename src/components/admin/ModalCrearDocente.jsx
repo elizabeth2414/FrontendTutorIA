@@ -130,7 +130,19 @@ export default function ModalCrearDocente({ open, onClose, onCreated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    let limpio = value;
+
+    // ✅ Campos tipo "texto corto": sin caracteres especiales
+    if (["especialidad", "grado_academico", "institucion"].includes(name)) {
+      limpio = value.replace(/[^0-9a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    }
+
+    // ✅ Nombre y apellido: solo letras y espacios (por si copian/pegan símbolos)
+    if (["nombre", "apellido"].includes(name)) {
+      limpio = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    }
+
+    setForm({ ...form, [name]: limpio });
 
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });

@@ -29,6 +29,7 @@ import VerLecturasHijo from "./pages/padre/VerLecturasHijo.jsx";
 import LeerLectura from "./pages/padre/LeerLectura.jsx";
 import LecturaIA from "./pages/padre/LecturaIA.jsx";
 import ProgresoHijos from "./pages/padre/ProgresoHijos.jsx";
+import HistorialHijo from "./pages/padre/HistorialHijo.jsx";
 import DashboardPadre from "./pages/padre/DashboardPadre.jsx";
 import ActividadesHijos from "./pages/padre/ActividadesHijos.jsx";
 import ConfiguracionPadre from "./pages/padre/ConfiguracionPadre.jsx";
@@ -39,6 +40,7 @@ import ResolverActividad from "./pages/padre/ResolverActividad.jsx";
 import EditarCuentaPadre from "./pages/padre/Editarcuentapadre.jsx";
 import ProgresoEstudiantesDocente from "./pages/docente/ProgresoEstudiantesDocente.jsx";
 import ProgresoDetalladoEstudiante from "./pages/docente/ProgresoDetalladoEstudiante.jsx";
+import HistorialDocente from "./pages/docente/HistorialDocente.jsx";
 
 // ADMIN
 import MenuAdmin from "./pages/admin/MenuAdmin.jsx";
@@ -74,6 +76,7 @@ function App() {
         <Route path="lecturas" element={<LecturasDocente />} />
         <Route path="progreso" element={<ProgresoEstudiantesDocente />} />
         <Route path="progreso/:estudianteId" element={<ProgresoDetalladoEstudiante />} />
+        <Route path="historial" element={<HistorialDocente />} />
         <Route path="/docente/menu/lecturas/:lecturaId/actividades" element={<ActividadesLectura />} />
         <Route path="/docente/menu/actividades/:actividadId/detalle" element={<ActividadDetalle />} />
 
@@ -116,6 +119,7 @@ function App() {
 
   <Route path="actividades" element={<ActividadesHijos />} />
   <Route path="progreso" element={<ProgresoHijos />} />
+  <Route path="historial" element={<HistorialHijo />} />
   <Route path="configuracion" element={<ConfiguracionPadre />} />
   <Route path="editar-cuenta" element={<EditarCuentaPadre />} />
 </Route>

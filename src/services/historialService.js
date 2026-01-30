@@ -33,3 +33,37 @@ export const getPracticasPronunciacionHijo = async (id) => {
   );
   return data;
 };
+
+// ===============================
+// PADRE (Tutor IA / mejoras)
+// ===============================
+export const getMejorasIAHijo = async (id) => {
+  const { data } = await axiosClient.get(
+    `/historial/mejoras/hijo/${id}`
+  );
+  return data;
+};
+
+// ===============================
+// DOCENTE
+// ===============================
+export const getHistorialPronunciacionEstudianteDocente = async (id) => {
+  const { data } = await axiosClient.get(
+    `/historial/pronunciacion/docente/${id}`
+  );
+  return data;
+};
+
+export const getPracticasPronunciacionEstudianteDocente = async (id) => {
+  const { data } = await axiosClient.get(
+    `/historial/practicas/docente/${id}`
+  );
+  return data;
+};
+
+export const getMejorasIAEstudianteDocente = async (id) => {
+  const { data } = await axiosClient.get(
+    `/historial/mejoras/docente/${id}`
+  );
+  return data;
+};

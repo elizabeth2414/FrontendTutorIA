@@ -13,15 +13,23 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
 
   // Validación en tiempo real
   const handleNombreChange = (value) => {
-    setNombre(value);
+    // ✅ Solo letras/números/espacios (sin símbolos)
+    const limpio = value.replace(/[^0-9a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    setNombre(limpio);
 
-    if (value.trim().length > 0 && value.trim().length < 3) {
+    if (limpio.trim().length > 0 && limpio.trim().length < 3) {
       setErrorNombre("El nombre debe tener al menos 3 caracteres.");
-    } else if (value.length > 50) {
+    } else if (limpio.length > 50) {
       setErrorNombre("El nombre no puede exceder 50 caracteres.");
     } else {
       setErrorNombre("");
     }
+  };
+
+  const handleDescripcionChange = (value) => {
+    // Texto libre, pero bloquea caracteres típicos de payloads
+    const limpio = value.replace(/[<>`;$|\\]/g, "");
+    setDescripcion(limpio);
   };
 
   const crear = async () => {
@@ -189,7 +197,7 @@ export default function ModalCrearCurso({ onClose, onCreated }) {
               <textarea
                 rows="3"
                 value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
+                onChange={(e) => handleDescripcionChange(e.target.value)}
                 placeholder="Breve descripción del curso..."
                 disabled={guardando}
                 className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition resize-none disabled:bg-slate-50 disabled:cursor-not-allowed"

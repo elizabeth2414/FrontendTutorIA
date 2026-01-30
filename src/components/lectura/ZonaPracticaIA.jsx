@@ -136,7 +136,7 @@ export default function ZonaPracticaIA({
             </p>
             <p className="text-xs text-slate-600">
               Primero lee la lectura completa y yo crearé ejercicios especiales para las partes
-              donde puedas mejorar. ¡Tú puedes! 💪
+              donde puedas mejorar. ¡Tú puedes! 
             </p>
           </div>
         )}
