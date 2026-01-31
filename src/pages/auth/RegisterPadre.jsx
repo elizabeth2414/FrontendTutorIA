@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { registrarPadre } from "../../services/authService";
 
+// ✅ Base URL única (SIN localhost)
+const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 const RegisterPadre = () => {
   const navigate = useNavigate();
@@ -32,26 +34,60 @@ const RegisterPadre = () => {
   const [verificandoEmail, setVerificandoEmail] = useState(false);
   const [emailDisponible, setEmailDisponible] = useState(true);
 
-  // 🔥 VALIDACIÓN EN TIEMPO REAL DEL EMAIL
+  // ✅ Debounce timer para evitar muchas llamadas al backend
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  // 🔥 VALIDACIÓN EN TIEMPO REAL DEL EMAIL (sin localhost)
   const verificarEmailDisponible = async (email) => {
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return; // No verificar si el formato es inválido
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+
+    // ✅ Si no hay API_BASE, no intentes fetch (evita Invalid URL)
+    if (!API_BASE) {
+      setEmailDisponible(true);
+      setErrors((prev) => ({
+        ...prev,
+        email: "❌ Falta configurar VITE_API_URL en el archivo .env",
+      }));
+      return;
     }
 
     setVerificandoEmail(true);
-    
+
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/auth/verificar-email-disponible?email=${encodeURIComponent(email)}`
+        `${API_BASE}/api/auth/verificar-email-disponible?email=${encodeURIComponent(
+          email
+        )}`
       );
-      
-      const data = await response.json();
-      
-      if (!data.disponible) {
+
+      // Por si el backend responde no-JSON (evitar crash)
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok) {
+        // Si hay un error del backend, no bloquees el form a lo bruto
+        console.error("Respuesta no OK verificando email:", response.status, data);
+        setEmailDisponible(true);
+        setErrors((prev) => ({ ...prev, email: "" }));
+        return;
+      }
+
+      if (data.disponible === false) {
         setEmailDisponible(false);
-        setErrors((prev) => ({ 
-          ...prev, 
-          email: "❌ Este correo electrónico ya está registrado. Por favor, usa otro o inicia sesión." 
+        setErrors((prev) => ({
+          ...prev,
+          email:
+            "❌ Este correo electrónico ya está registrado. Por favor, usa otro o inicia sesión.",
         }));
       } else {
         setEmailDisponible(true);
@@ -61,6 +97,7 @@ const RegisterPadre = () => {
       console.error("Error al verificar email:", error);
       // En caso de error de conexión, permitir continuar
       setEmailDisponible(true);
+      setErrors((prev) => ({ ...prev, email: "" }));
     } finally {
       setVerificandoEmail(false);
     }
@@ -86,8 +123,11 @@ const RegisterPadre = () => {
       if (!emailRegex.test(value)) {
         msg = "Correo electrónico no válido.";
       } else {
-        // ✅ Si el formato es válido, verificar si existe
-        verificarEmailDisponible(value);
+        // ✅ Debounce: esperar 500ms después de escribir
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          verificarEmailDisponible(value);
+        }, 500);
       }
     }
 
@@ -101,7 +141,7 @@ const RegisterPadre = () => {
   // Manejar cambios
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setForm((prev) => ({ ...prev, [name]: value }));
     validateField(name, value);
   };
 
@@ -112,6 +152,13 @@ const RegisterPadre = () => {
     setErrorMsg("");
     setSuccessMsg("");
 
+    // ✅ Si falta API_BASE, bloquear registro (para evitar que intente "nada")
+    if (!API_BASE) {
+      setErrorMsg("❌ Falta configurar VITE_API_URL en el archivo .env");
+      setLoading(false);
+      return;
+    }
+
     // ✅ Doble verificación antes de enviar
     if (!emailDisponible) {
       setErrorMsg("Por favor, usa un correo electrónico diferente.");
@@ -120,27 +167,26 @@ const RegisterPadre = () => {
     }
 
     try {
-      // Registrar usuario - el backend enviará automáticamente el email de verificación
-      const response = await registrarPadre(form);
-      
-      setSuccessMsg("¡Registro exitoso! Hemos enviado un correo de verificación a " + form.email);
-      
+      await registrarPadre(form);
+
+      setSuccessMsg(
+        "¡Registro exitoso! Hemos enviado un correo de verificación a " + form.email
+      );
+
       // Redirigir a la página de verificación después de 3 segundos
       setTimeout(() => {
-        navigate("/verificar-email", { 
-          state: { 
+        navigate("/verificar-email", {
+          state: {
             email: form.email,
-            mensaje: "Revisa tu bandeja de entrada y spam"
-          } 
+            mensaje: "Revisa tu bandeja de entrada y spam",
+          },
         });
       }, 3000);
-      
     } catch (error) {
-      // Manejo de errores
       if (error.response?.data?.message) {
         setErrorMsg(error.response.data.message);
       } else {
-        setErrorMsg("No se pudo completar el registro. Por favor, intenta de nuevou.");
+        setErrorMsg("No se pudo completar el registro. Por favor, intenta de nuevo.");
       }
     }
 
@@ -155,9 +201,10 @@ const RegisterPadre = () => {
     !form.email ||
     !form.password ||
     !emailDisponible ||
-    verificandoEmail;
+    verificandoEmail ||
+    !API_BASE; // ✅ también bloquea si falta la URL
 
-  // 📱 DISEÑO MÓVIL - Mejorado con colores suaves
+  // 📱 DISEÑO MÓVIL
   if (isMobile) {
     return (
       <>
@@ -211,12 +258,28 @@ const RegisterPadre = () => {
                   />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight" style={{fontFamily: 'Fredoka, Poppins, sans-serif'}}>
+              <h2
+                className="text-3xl font-bold text-slate-900 mb-2 tracking-tight"
+                style={{ fontFamily: "Fredoka, Poppins, sans-serif" }}
+              >
                 Crear Cuenta
               </h2>
-              <p className="text-slate-600 text-base" style={{fontFamily: 'Poppins, sans-serif'}}>
+              <p
+                className="text-slate-600 text-base"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
                 Regístrate como Padre / Tutor
               </p>
+
+              {/* ✅ Aviso si falta VITE_API_URL */}
+              {!API_BASE && (
+                <p
+                  className="mt-3 text-red-600 text-xs"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  ❌ Configura VITE_API_URL en tu .env (ej: http://192.168.18.2:8000)
+                </p>
+              )}
             </div>
 
             {/* Formulario */}
@@ -234,7 +297,7 @@ const RegisterPadre = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span style={{fontFamily: 'Poppins, sans-serif'}}>{errorMsg}</span>
+                  <span style={{ fontFamily: "Poppins, sans-serif" }}>{errorMsg}</span>
                 </div>
               )}
 
@@ -251,14 +314,17 @@ const RegisterPadre = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span style={{fontFamily: 'Poppins, sans-serif'}}>{successMsg}</span>
+                  <span style={{ fontFamily: "Poppins, sans-serif" }}>{successMsg}</span>
                 </div>
               )}
 
               <form onSubmit={handleRegister} className="space-y-4">
                 {/* Nombre */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'Poppins, sans-serif'}}>
+                  <label
+                    className="text-slate-700 font-semibold text-sm block mb-2"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
                     Nombre
                   </label>
                   <div className="relative">
@@ -273,7 +339,7 @@ const RegisterPadre = () => {
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
                           : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                       }`}
-                      style={{fontFamily: 'Poppins, sans-serif'}}
+                      style={{ fontFamily: "Poppins, sans-serif" }}
                     />
                     <svg
                       className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
@@ -290,13 +356,21 @@ const RegisterPadre = () => {
                     </svg>
                   </div>
                   {errors.nombre && (
-                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'Poppins, sans-serif'}}>{errors.nombre}</p>
+                    <p
+                      className="text-red-600 text-xs mt-2 ml-1"
+                      style={{ fontFamily: "Poppins, sans-serif" }}
+                    >
+                      {errors.nombre}
+                    </p>
                   )}
                 </div>
 
                 {/* Apellido */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'Poppins, sans-serif'}}>
+                  <label
+                    className="text-slate-700 font-semibold text-sm block mb-2"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
                     Apellido
                   </label>
                   <div className="relative">
@@ -311,7 +385,7 @@ const RegisterPadre = () => {
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
                           : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                       }`}
-                      style={{fontFamily: 'Poppins, sans-serif'}}
+                      style={{ fontFamily: "Poppins, sans-serif" }}
                     />
                     <svg
                       className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
@@ -328,13 +402,21 @@ const RegisterPadre = () => {
                     </svg>
                   </div>
                   {errors.apellido && (
-                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'Poppins, sans-serif'}}>{errors.apellido}</p>
+                    <p
+                      className="text-red-600 text-xs mt-2 ml-1"
+                      style={{ fontFamily: "Poppins, sans-serif" }}
+                    >
+                      {errors.apellido}
+                    </p>
                   )}
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'Poppins, sans-serif'}}>
+                  <label
+                    className="text-slate-700 font-semibold text-sm block mb-2"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
                     Correo electrónico
                   </label>
                   <div className="relative">
@@ -350,7 +432,7 @@ const RegisterPadre = () => {
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
                           : "border-slate-200 focus:border-pink-500 focus:ring-4 focus:ring-pink-100"
                       }`}
-                      style={{fontFamily: 'Poppins, sans-serif'}}
+                      style={{ fontFamily: "Poppins, sans-serif" }}
                     />
                     <svg
                       className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
@@ -365,32 +447,67 @@ const RegisterPadre = () => {
                         d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
                       />
                     </svg>
+
                     {/* Indicador de verificación */}
                     {verificandoEmail && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <svg className="animate-spin h-5 w-5 text-pink-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin h-5 w-5 text-pink-500"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                       </div>
                     )}
-                    {/* Check verde si está disponible */}
+
+                    {/* Check verde */}
                     {!verificandoEmail && form.email && !errors.email && emailDisponible && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                        <svg
+                          className="w-5 h-5 text-green-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                     )}
                   </div>
+
                   {errors.email && (
-                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'Poppins, sans-serif'}}>{errors.email}</p>
+                    <p
+                      className="text-red-600 text-xs mt-2 ml-1"
+                      style={{ fontFamily: "Poppins, sans-serif" }}
+                    >
+                      {errors.email}
+                    </p>
                   )}
                 </div>
 
                 {/* Contraseña */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2" style={{fontFamily: 'Poppins, sans-serif'}}>
+                  <label
+                    className="text-slate-700 font-semibold text-sm block mb-2"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
                     Contraseña
                   </label>
                   <div className="relative">
@@ -407,7 +524,7 @@ const RegisterPadre = () => {
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
                           : "border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
                       }`}
-                      style={{fontFamily: 'Poppins, sans-serif'}}
+                      style={{ fontFamily: "Poppins, sans-serif" }}
                     />
                     <button
                       type="button"
@@ -427,7 +544,12 @@ const RegisterPadre = () => {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-red-600 text-xs mt-2 ml-1" style={{fontFamily: 'Poppins, sans-serif'}}>{errors.password}</p>
+                    <p
+                      className="text-red-600 text-xs mt-2 ml-1"
+                      style={{ fontFamily: "Poppins, sans-serif" }}
+                    >
+                      {errors.password}
+                    </p>
                   )}
                 </div>
 
@@ -440,7 +562,7 @@ const RegisterPadre = () => {
                       ? "bg-slate-400 cursor-not-allowed"
                       : "bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 active:scale-95 shadow-purple-500/20"
                   }`}
-                  style={{fontFamily: 'Fredoka, Poppins, sans-serif'}}
+                  style={{ fontFamily: "Fredoka, Poppins, sans-serif" }}
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -450,14 +572,7 @@ const RegisterPadre = () => {
                         fill="none"
                         viewBox="0 0 24 24"
                       >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path
                           className="opacity-75"
                           fill="currentColor"
@@ -473,12 +588,9 @@ const RegisterPadre = () => {
               </form>
 
               <div className="mt-6 text-center">
-                <p className="text-slate-600 text-sm" style={{fontFamily: 'Poppins, sans-serif'}}>
+                <p className="text-slate-600 text-sm" style={{ fontFamily: "Poppins, sans-serif" }}>
                   ¿Ya tienes cuenta?{" "}
-                  <Link
-                    to="/login"
-                    className="text-purple-600 font-bold hover:underline"
-                  >
+                  <Link to="/login" className="text-purple-600 font-bold hover:underline">
                     Inicia sesión
                   </Link>
                 </p>
@@ -486,7 +598,7 @@ const RegisterPadre = () => {
             </div>
 
             {/* Footer info */}
-            <div className="text-center text-slate-500 text-xs pb-4" style={{fontFamily: 'Poppins, sans-serif'}}>
+            <div className="text-center text-slate-500 text-xs pb-4" style={{ fontFamily: "Poppins, sans-serif" }}>
               <p>v1.0.0 • BookiSmartIA © 2025</p>
             </div>
           </div>
@@ -495,42 +607,27 @@ const RegisterPadre = () => {
     );
   }
 
-  // 🖥️ DISEÑO WEB - Mejorado con colores suaves
+  // 🖥️ DISEÑO WEB
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
-        
-        * {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-          font-family: 'Fredoka', 'Poppins', sans-serif;
-        }
+        * { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Fredoka', 'Poppins', sans-serif; }
       `}</style>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/20 to-pink-50/30 flex flex-col">
         <Navbar />
 
-        {/* ESPACIADO CORRECTO - pt-24 móvil, pt-28 desktop */}
         <main className="pt-24 md:pt-28 flex-1 flex items-center justify-center p-4 md:p-6">
           <div className="relative bg-white/80 backdrop-blur-xl p-8 md:p-10 lg:p-12 rounded-2xl md:rounded-3xl shadow-2xl shadow-slate-200/50 max-w-2xl w-full border border-white/60 overflow-hidden">
-            
-            {/* Elementos decorativos de fondo suaves */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-purple-200/15 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-pink-200/15 rounded-full blur-3xl"></div>
 
             <div className="relative z-10">
-              {/* Header */}
               <div className="text-center mb-6 md:mb-8">
                 <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-purple-400 via-pink-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-xl shadow-purple-500/20">
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -539,22 +636,24 @@ const RegisterPadre = () => {
                     />
                   </svg>
                 </div>
+
                 <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 md:mb-3 tracking-tight">
                   Registro de Padre / Tutor
                 </h2>
                 <p className="text-slate-600 text-sm md:text-base">
                   Crea tu cuenta para seguir el progreso de tus hijos
                 </p>
+
+                {!API_BASE && (
+                  <p className="mt-3 text-red-600 text-xs">
+                    ❌ Configura VITE_API_URL en tu .env (ej: http://192.168.18.2:8000)
+                  </p>
+                )}
               </div>
 
-              {/* Mensajes */}
               {errorMsg && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl mb-6 flex items-start shadow-sm">
-                  <svg
-                    className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -567,11 +666,7 @@ const RegisterPadre = () => {
 
               {successMsg && (
                 <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl mb-6 flex items-start shadow-sm">
-                  <svg
-                    className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -582,16 +677,10 @@ const RegisterPadre = () => {
                 </div>
               )}
 
-              {/* Formulario */}
-              <form
-                onSubmit={handleRegister}
-                className="grid grid-cols-1 md:grid-cols-2 gap-5"
-              >
+              <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Nombre */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2">
-                    Nombre
-                  </label>
+                  <label className="text-slate-700 font-semibold text-sm block mb-2">Nombre</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -605,30 +694,16 @@ const RegisterPadre = () => {
                           : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                       }`}
                     />
-                    <svg
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
-                  {errors.nombre && (
-                    <p className="text-red-600 text-xs mt-2 ml-1">{errors.nombre}</p>
-                  )}
+                  {errors.nombre && <p className="text-red-600 text-xs mt-2 ml-1">{errors.nombre}</p>}
                 </div>
 
                 {/* Apellido */}
                 <div>
-                  <label className="text-slate-700 font-semibold text-sm block mb-2">
-                    Apellido
-                  </label>
+                  <label className="text-slate-700 font-semibold text-sm block mb-2">Apellido</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -642,30 +717,16 @@ const RegisterPadre = () => {
                           : "border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                       }`}
                     />
-                    <svg
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  {errors.apellido && (
-                    <p className="text-red-600 text-xs mt-2 ml-1">{errors.apellido}</p>
-                  )}
+                  {errors.apellido && <p className="text-red-600 text-xs mt-2 ml-1">{errors.apellido}</p>}
                 </div>
 
                 {/* Email */}
                 <div className="md:col-span-2">
-                  <label className="text-slate-700 font-semibold text-sm block mb-2">
-                    Correo electrónico
-                  </label>
+                  <label className="text-slate-700 font-semibold text-sm block mb-2">Correo electrónico</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -680,20 +741,10 @@ const RegisterPadre = () => {
                           : "border-slate-200 focus:border-pink-500 focus:ring-4 focus:ring-pink-100"
                       }`}
                     />
-                    <svg
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                      />
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
-                    {/* Indicador de verificación */}
+
                     {verificandoEmail && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
                         <svg className="animate-spin h-5 w-5 text-pink-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -702,7 +753,7 @@ const RegisterPadre = () => {
                         </svg>
                       </div>
                     )}
-                    {/* Check verde si está disponible */}
+
                     {!verificandoEmail && form.email && !errors.email && emailDisponible && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
                         <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -711,16 +762,13 @@ const RegisterPadre = () => {
                       </div>
                     )}
                   </div>
-                  {errors.email && (
-                    <p className="text-red-600 text-xs mt-2 ml-1">{errors.email}</p>
-                  )}
+
+                  {errors.email && <p className="text-red-600 text-xs mt-2 ml-1">{errors.email}</p>}
                 </div>
 
-                {/* Contraseña */}
+                {/* Password */}
                 <div className="md:col-span-2">
-                  <label className="text-slate-700 font-semibold text-sm block mb-2">
-                    Contraseña
-                  </label>
+                  <label className="text-slate-700 font-semibold text-sm block mb-2">Contraseña</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -753,12 +801,10 @@ const RegisterPadre = () => {
                       )}
                     </button>
                   </div>
-                  {errors.password && (
-                    <p className="text-red-600 text-xs mt-2 ml-1">{errors.password}</p>
-                  )}
+                  {errors.password && <p className="text-red-600 text-xs mt-2 ml-1">{errors.password}</p>}
                 </div>
 
-                {/* Botón */}
+                {/* Button */}
                 <div className="md:col-span-2">
                   <button
                     type="submit"
@@ -769,38 +815,11 @@ const RegisterPadre = () => {
                         : "bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 hover:scale-[1.02] shadow-purple-500/20"
                     }`}
                   >
-                    {loading ? (
-                      <span className="flex items-center justify-center">
-                        <svg
-                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Registrando...
-                      </span>
-                    ) : (
-                      "Crear Cuenta"
-                    )}
+                    {loading ? "Registrando..." : "Crear Cuenta"}
                   </button>
                 </div>
               </form>
 
-              {/* Link login */}
               <div className="mt-6 md:mt-8 text-center">
                 <p className="text-slate-600 text-sm">
                   ¿Ya tienes una cuenta?{" "}
