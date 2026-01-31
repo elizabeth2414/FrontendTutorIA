@@ -390,64 +390,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* DESCARGA LA APP - SECCIÓN QR */}
-        <section className="w-full max-w-5xl mt-16 md:mt-24">
-          <div className="relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl md:rounded-3xl p-8 md:p-12 border border-emerald-200/50 overflow-hidden animate-fade-in-up">
-            
-            <div className="relative z-10 text-center space-y-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-emerald-200/50 mb-4">
-                <span className="text-sm font-semibold text-emerald-700">Disponible en Google Play</span>
-              </div>
-
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-                Descarga BookiSmartIA
-              </h2>
-              
-              <p className="text-slate-600 text-base md:text-lg max-w-2xl mx-auto">
-                Escanea el código QR o descarga desde Play Store
-              </p>
-
-              {/* ESPACIO PARA CÓDIGO QR */}
-              <div className="flex flex-col items-center gap-6 pt-6">
-                
-                {/* Contenedor del QR - Aquí pegarás tu código QR */}
-                <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-emerald-200/50">
-                  <div className="w-48 h-48 md:w-64 md:h-64 flex items-center justify-center bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
-                    <div className="text-center text-slate-400">
-                      <svg className="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                      </svg>
-                      <p className="text-sm font-medium">Tu código QR aquí</p>
-                      <p className="text-xs mt-1">Pega el código del Play Store</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botón alternativo */}
-                <div className="flex flex-col sm:flex-row gap-4 items-center">
-                  <button
-                    onClick={() => window.open('https://play.google.com/store', '_blank')}
-                    className="flex items-center gap-3 px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
-                  >
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
-                    </svg>
-                    <span className="font-semibold">Descargar en Play Store</span>
-                  </button>
-
-                  <p className="text-slate-500 text-sm">
-                    o escanea el código QR
-                  </p>
-                </div>
-              </div>
-
-              <p className="text-slate-500 text-sm pt-4">
-                📱 Compatible con Android 6.0 o superior
-              </p>
-            </div>
-          </div>
-        </section>
-
         {/* LLAMADO A LA ACCIÓN FINAL */}
         <section className="w-full max-w-5xl mt-16 md:mt-24 text-center">
           <div className="relative bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 rounded-2xl md:rounded-3xl p-8 md:p-12 lg:p-16 text-white shadow-2xl shadow-emerald-500/20 overflow-hidden">

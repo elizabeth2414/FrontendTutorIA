@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import { vincularHijo } from "../../services/padresService";
 
 export default function VincularHijo() {
@@ -12,8 +13,6 @@ export default function VincularHijo() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
 
   const [errors, setErrors] = useState({
     nombre: "",
@@ -21,7 +20,9 @@ export default function VincularHijo() {
     fecha_nacimiento: "",
   });
 
-  // Validación en tiempo real
+  // ==========================================================
+  // VALIDACIONES
+  // ==========================================================
   const validateField = (name, value) => {
     let msg = "";
     const soloLetras = /^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/;
@@ -74,20 +75,31 @@ export default function VincularHijo() {
     };
   };
 
+  // ==========================================================
+  // SUBMIT
+  // ==========================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
 
     // Validar campos vacíos
     if (!form.nombre || !form.apellido || !form.fecha_nacimiento) {
-      setErrorMsg("Por favor completa todos los campos.");
+      await Swal.fire({
+        title: "Campos incompletos",
+        text: "Por favor completa todos los campos.",
+        icon: "warning",
+        confirmButtonColor: "#10b981",
+      });
       return;
     }
 
     // Validar errores existentes
     if (errors.nombre || errors.apellido || errors.fecha_nacimiento) {
-      setErrorMsg("Por favor corrige los errores antes de continuar.");
+      await Swal.fire({
+        title: "Errores de validación",
+        text: "Por favor corrige los errores antes de continuar.",
+        icon: "warning",
+        confirmButtonColor: "#10b981",
+      });
       return;
     }
 
@@ -95,17 +107,47 @@ export default function VincularHijo() {
 
     try {
       const payload = normalizarPayload();
+      
+      console.log("📤 Vinculando hijo:", payload);
+
       await vincularHijo(payload);
 
-      setSuccessMsg("Hijo vinculado correctamente.");
-      setTimeout(() => navigate("/padre/menu/hijos"), 1500);
-    } catch (error) {
-      const mensaje =
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        "No se pudo vincular al hijo. Verifica los datos.";
+      console.log("✅ Hijo vinculado correctamente");
 
-      setErrorMsg(mensaje);
+      await Swal.fire({
+        title: "¡Hijo vinculado!",
+        text: "El hijo ha sido vinculado exitosamente",
+        icon: "success",
+        confirmButtonColor: "#10b981",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setTimeout(() => navigate("/padre/menu/hijos"), 2000);
+    } catch (error) {
+      console.error("❌ Error vinculando hijo:", error);
+      console.error("Response:", error.response?.data);
+
+      let mensaje = "No se pudo vincular al hijo. Verifica los datos e intenta nuevamente.";
+      
+      if (error.response?.data?.detail) {
+        if (typeof error.response.data.detail === 'string') {
+          mensaje = error.response.data.detail;
+        } else if (Array.isArray(error.response.data.detail)) {
+          mensaje = error.response.data.detail.map(e => e.msg || e.message).join(', ');
+        }
+      } else if (error.response?.data?.message) {
+        mensaje = error.response.data.message;
+      } else if (error.message) {
+        mensaje = error.message;
+      }
+
+      await Swal.fire({
+        title: "Error",
+        text: mensaje,
+        icon: "error",
+        confirmButtonColor: "#10b981",
+      });
     } finally {
       setLoading(false);
     }
@@ -114,77 +156,61 @@ export default function VincularHijo() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Fredoka:wght@500;600;700&display=swap');
         
         * {
-          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
         h1, h2, h3, h4, h5, h6 {
-          font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Fredoka', 'Poppins', sans-serif;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out;
         }
       `}</style>
 
       {/* VERSIÓN MÓVIL */}
-      <div className="md:hidden min-h-screen bg-white">
+      <div className="md:hidden min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 animate-fadeIn">
         {/* Header móvil */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-5 shadow-lg">
+        <div className="bg-white rounded-b-3xl shadow-lg p-4 mb-5">
           <button
             onClick={() => navigate("/padre/menu/hijos")}
-            className="flex items-center gap-2 text-white/90 hover:text-white mb-3 transition-colors"
+            className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 mb-3 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="font-medium text-xs">Volver</span>
+            <span className="font-medium text-sm">Volver</span>
           </button>
           
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white mb-0.5">Vincular Hijo</h1>
-              <p className="text-blue-100 text-xs">Completa los datos</p>
+              <h1 className="text-xl font-bold text-slate-900">Vincular Hijo</h1>
+              <p className="text-slate-600 text-xs">Completa los datos</p>
             </div>
           </div>
         </div>
 
         {/* Contenido móvil */}
-        <div className="px-4 py-5">
-          {/* MENSAJES */}
-          {errorMsg && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 border-l-4 border-red-500 flex items-start gap-2">
-              <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <div>
-                <p className="font-semibold text-red-900 text-xs">Error</p>
-                <p className="text-red-700 text-xs mt-0.5">{errorMsg}</p>
-              </div>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="mb-4 p-3 rounded-lg bg-green-50 border-l-4 border-green-500 flex items-start gap-2">
-              <svg className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <div>
-                <p className="font-semibold text-green-900 text-xs">¡Éxito!</p>
-                <p className="text-green-700 text-xs mt-0.5">{successMsg}</p>
-              </div>
-            </div>
-          )}
-
+        <div className="px-4 pb-8">
           {/* FORMULARIO MÓVIL */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Nombre */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Nombre del hijo
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+              <label className="block text-sm font-bold text-slate-900 mb-2">
+                Nombre del hijo <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -192,27 +218,28 @@ export default function VincularHijo() {
                 required
                 value={form.nombre}
                 onChange={handleChange}
-                className={`w-full px-3 py-2.5 rounded-lg border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
+                disabled={loading}
+                className={`w-full px-4 py-3 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
                   errors.nombre
                     ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                    : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                }`}
+                    : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                } disabled:bg-slate-50 disabled:cursor-not-allowed`}
                 placeholder="Ej: Juan"
               />
               {errors.nombre && (
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <div className="mt-2 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-red-600 text-xs font-medium">{errors.nombre}</p>
+                  <p className="text-red-700 text-xs font-medium">{errors.nombre}</p>
                 </div>
               )}
             </div>
 
             {/* Apellido */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Apellido del hijo
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+              <label className="block text-sm font-bold text-slate-900 mb-2">
+                Apellido del hijo <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -220,27 +247,28 @@ export default function VincularHijo() {
                 required
                 value={form.apellido}
                 onChange={handleChange}
-                className={`w-full px-3 py-2.5 rounded-lg border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
+                disabled={loading}
+                className={`w-full px-4 py-3 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
                   errors.apellido
                     ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                    : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                }`}
+                    : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                } disabled:bg-slate-50 disabled:cursor-not-allowed`}
                 placeholder="Ej: Pérez"
               />
               {errors.apellido && (
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <div className="mt-2 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-red-600 text-xs font-medium">{errors.apellido}</p>
+                  <p className="text-red-700 text-xs font-medium">{errors.apellido}</p>
                 </div>
               )}
             </div>
 
             {/* Fecha */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Fecha de nacimiento
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+              <label className="block text-sm font-bold text-slate-900 mb-2">
+                Fecha de nacimiento <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -248,37 +276,43 @@ export default function VincularHijo() {
                 required
                 value={form.fecha_nacimiento}
                 onChange={handleChange}
-                className={`w-full px-3 py-2.5 rounded-lg border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
+                disabled={loading}
+                className={`w-full px-4 py-3 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
                   errors.fecha_nacimiento
                     ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                    : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                }`}
+                    : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                } disabled:bg-slate-50 disabled:cursor-not-allowed`}
               />
               {errors.fecha_nacimiento && (
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <div className="mt-2 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-red-600 text-xs font-medium">{errors.fecha_nacimiento}</p>
+                  <p className="text-red-700 text-xs font-medium">{errors.fecha_nacimiento}</p>
                 </div>
               )}
-              <div className="mt-1.5 flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+              <div className="mt-2 flex items-center gap-2 bg-emerald-50 p-2 rounded-lg">
+                <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
-                <p className="text-slate-500 text-xs">Edad válida: 7 a 10 años</p>
+                <p className="text-emerald-700 text-xs font-medium">Edad válida: 7 a 10 años</p>
               </div>
             </div>
 
             {/* Info adicional móvil */}
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-              <div className="flex items-start gap-2 text-xs text-blue-900">
-                <svg className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <p className="leading-relaxed">
-                  Los datos deben coincidir con los registrados por el docente.
-                </p>
+            <div className="bg-white rounded-2xl p-4 shadow-sm border-2 border-emerald-200">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-emerald-900 mb-1">Importante</p>
+                  <p className="text-xs text-emerald-700 leading-relaxed">
+                    Los datos deben coincidir con los registrados por el docente.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -286,15 +320,15 @@ export default function VincularHijo() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded-lg text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
+              className={`w-full py-4 rounded-xl text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
                 loading
                   ? "bg-slate-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/30"
+                  : "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-700 shadow-emerald-500/20 active:scale-95"
               }`}
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -302,7 +336,7 @@ export default function VincularHijo() {
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>Vincular Hijo</span>
@@ -314,71 +348,46 @@ export default function VincularHijo() {
       </div>
 
       {/* VERSIÓN DESKTOP */}
-      <div className="hidden md:flex min-h-screen bg-white items-center justify-center p-6">
-        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-8 relative overflow-hidden">
+      <div className="hidden md:flex min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 items-center justify-center p-6 animate-fadeIn">
+        <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-200 p-10 relative overflow-hidden">
           
           {/* Elementos decorativos sutiles */}
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-100/30 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-100/30 rounded-full blur-3xl"></div>
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-100/30 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-teal-100/30 rounded-full blur-3xl"></div>
 
           <div className="relative z-10">
             {/* ENCABEZADO DESKTOP */}
             <div className="text-center mb-8">
               {/* Icono */}
-              <div className="flex justify-center mb-5">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/20">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex justify-center mb-6">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center shadow-xl shadow-emerald-500/20">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
               </div>
 
-              <h2 className="text-2xl font-bold text-slate-900 mb-1">
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">
                 Vincular Hijo
               </h2>
-              <p className="text-slate-600 text-sm">
+              <p className="text-slate-600">
                 Ingresa los datos registrados por el docente
               </p>
             </div>
 
-            {/* MENSAJES DESKTOP */}
-            {errorMsg && (
-              <div className="mb-5 p-4 rounded-xl bg-red-50 border-l-4 border-red-500 flex items-start gap-3">
-                <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <div>
-                  <p className="font-semibold text-red-900 text-sm">Error</p>
-                  <p className="text-red-700 text-sm mt-0.5">{errorMsg}</p>
-                </div>
-              </div>
-            )}
-
-            {successMsg && (
-              <div className="mb-5 p-4 rounded-xl bg-green-50 border-l-4 border-green-500 flex items-start gap-3">
-                <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <div>
-                  <p className="font-semibold text-green-900 text-sm">¡Éxito!</p>
-                  <p className="text-green-700 text-sm mt-0.5">{successMsg}</p>
-                </div>
-              </div>
-            )}
-
             {/* FORMULARIO DESKTOP */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Grid 2 columnas */}
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-6">
                 {/* Nombre */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Nombre del hijo
+                  <label className="block text-sm font-bold text-slate-900 mb-2">
+                    Nombre del hijo <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                      <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                      <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
@@ -388,32 +397,33 @@ export default function VincularHijo() {
                       required
                       value={form.nombre}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
+                      disabled={loading}
+                      className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none ${
                         errors.nombre
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                          : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      }`}
+                          : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                      } disabled:bg-slate-50 disabled:cursor-not-allowed`}
                       placeholder="Ej: Juan"
                     />
                   </div>
                   {errors.nombre && (
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="mt-2 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                      <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
-                      <p className="text-red-600 text-xs font-medium">{errors.nombre}</p>
+                      <p className="text-red-700 text-xs font-medium">{errors.nombre}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Apellido */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Apellido del hijo
+                  <label className="block text-sm font-bold text-slate-900 mb-2">
+                    Apellido del hijo <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                      <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                      <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
@@ -423,20 +433,21 @@ export default function VincularHijo() {
                       required
                       value={form.apellido}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
+                      disabled={loading}
+                      className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none ${
                         errors.apellido
                           ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                          : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      }`}
+                          : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                      } disabled:bg-slate-50 disabled:cursor-not-allowed`}
                       placeholder="Ej: Pérez"
                     />
                   </div>
                   {errors.apellido && (
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="mt-2 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                      <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
-                      <p className="text-red-600 text-xs font-medium">{errors.apellido}</p>
+                      <p className="text-red-700 text-xs font-medium">{errors.apellido}</p>
                     </div>
                   )}
                 </div>
@@ -444,12 +455,12 @@ export default function VincularHijo() {
 
               {/* Fecha - Ancho completo */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Fecha de nacimiento
+                <label className="block text-sm font-bold text-slate-900 mb-2">
+                  Fecha de nacimiento <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -459,26 +470,27 @@ export default function VincularHijo() {
                     required
                     value={form.fecha_nacimiento}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-3 py-3 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none text-sm ${
+                    disabled={loading}
+                    className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 bg-white transition-all duration-300 focus:outline-none ${
                       errors.fecha_nacimiento
                         ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                        : "border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    }`}
+                        : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                    } disabled:bg-slate-50 disabled:cursor-not-allowed`}
                   />
                 </div>
                 {errors.fecha_nacimiento && (
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="mt-2 flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                    <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    <p className="text-red-600 text-xs font-medium">{errors.fecha_nacimiento}</p>
+                    <p className="text-red-700 text-xs font-medium">{errors.fecha_nacimiento}</p>
                   </div>
                 )}
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <div className="mt-2 flex items-center gap-2 bg-emerald-50 p-2 rounded-lg">
+                  <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-slate-500 text-xs">Edad válida: entre 7 y 10 años</p>
+                  <p className="text-emerald-700 text-xs font-medium">Edad válida: entre 7 y 10 años</p>
                 </div>
               </div>
 
@@ -486,15 +498,15 @@ export default function VincularHijo() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-3 rounded-xl text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
+                className={`w-full py-4 rounded-xl text-white font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
                   loading
                     ? "bg-slate-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20"
+                    : "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-700 shadow-emerald-500/20 hover:scale-[1.02]"
                 }`}
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -502,7 +514,7 @@ export default function VincularHijo() {
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     <span>Vincular Hijo</span>
@@ -515,9 +527,9 @@ export default function VincularHijo() {
             <div className="mt-6 text-center">
               <button
                 onClick={() => navigate("/padre/menu/hijos")}
-                className="group inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 font-semibold transition-all duration-300 text-sm"
+                className="group inline-flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-semibold transition-all duration-300"
               >
-                <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 <span>Volver a Mis Hijos</span>
@@ -525,14 +537,19 @@ export default function VincularHijo() {
             </div>
 
             {/* Info adicional desktop */}
-            <div className="mt-6 pt-5 border-t border-slate-200">
-              <div className="flex items-start gap-2 text-sm text-slate-600">
-                <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <p className="leading-relaxed text-xs">
-                  <span className="font-semibold text-slate-700">Importante:</span> Los datos deben coincidir exactamente con los registrados por el docente en el sistema.
-                </p>
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <div className="flex items-start gap-3 bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-emerald-900 mb-1">Importante</p>
+                  <p className="text-sm text-emerald-700 leading-relaxed">
+                    Los datos deben coincidir exactamente con los registrados por el docente en el sistema.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

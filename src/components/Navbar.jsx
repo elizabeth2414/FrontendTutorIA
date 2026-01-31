@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MdMenu, MdClose } from "react-icons/md";
 
+import bookiImg from "../assets/images/bookismartia.jpeg";
+
 export default function Navbar() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -102,7 +104,7 @@ export default function Navbar() {
             
             {/* Logo real - actualiza esta ruta cuando agregues la imagen */}
             <img 
-              src="/src/assets/images/bookismartia.jpeg" 
+              src={bookiImg} 
               alt="BookiSmartIA Logo" 
               className="logo-img relative w-11 h-11 sm:w-12 sm:h-12 object-contain rounded-xl group-hover:scale-110 transition-all duration-300 drop-shadow-lg"
             />

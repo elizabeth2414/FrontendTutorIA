@@ -90,7 +90,7 @@ export default function Contacto() {
                         href="mailto:calmasoporte2025@gmail.com" 
                         className="text-teal-600 hover:text-teal-700 font-semibold text-sm md:text-base transition-colors inline-flex items-center gap-2 group break-all"
                       >
-                        calmasoporte2025@gmail.com
+                        mariuxi.calle.est@tecazuay.edu.ec, carmen.neria.est@tecazuay.edu.ec
                         <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
