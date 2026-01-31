@@ -140,7 +140,7 @@ const RegisterPadre = () => {
       if (error.response?.data?.message) {
         setErrorMsg(error.response.data.message);
       } else {
-        setErrorMsg("No se pudo completar el registro. Por favor, intenta de nuevo.");
+        setErrorMsg("No se pudo completar el registro. Por favor, intenta de nuevou.");
       }
     }
 
