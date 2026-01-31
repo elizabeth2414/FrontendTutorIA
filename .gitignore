@@ -12,8 +12,8 @@ dist/
 vite.config.js.timestamp-*
 
 # --- Logs ---
-*.log
-logs/
+
+
 *.pid
 *.seed
 *.pid.lock
