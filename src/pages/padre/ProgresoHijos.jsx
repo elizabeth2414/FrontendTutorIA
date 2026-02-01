@@ -155,11 +155,7 @@ export default function ProgresoHijos() {
 
         {/* Header móvil */}
         <div className="bg-white rounded-b-2xl shadow-md px-4 pt-4 pb-5">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 mb-3 transition-colors">
-            <MdArrowBack size={16} />
-            <span className="font-bold text-sm">Volver</span>
-          </button>
-
+         
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <MdInsights size={24} className="text-white" />
@@ -310,9 +306,7 @@ export default function ProgresoHijos() {
           {/* Header desktop */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl border border-slate-200 bg-white hover:border-emerald-300 hover:text-emerald-600 flex items-center justify-center transition-all shadow-sm">
-                <MdArrowBack size={20} className="text-slate-500" />
-              </button>
+        
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <MdInsights size={28} />
               </div>

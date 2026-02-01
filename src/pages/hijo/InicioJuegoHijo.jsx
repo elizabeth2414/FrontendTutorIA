@@ -341,11 +341,7 @@ export default function InicioJuegoHijo() {
                 <p className="text-sm text-slate-400 mt-2 text-right font-medium">{Math.round(porcentaje)}% completado</p>
               </div>
 
-              {/* Racha */}
-              <div className="bg-gradient-to-r from-orange-400 to-red-500 rounded-2xl p-5 flex items-center justify-center gap-3 text-white font-bold text-base shadow-lg">
-                <MdLocalFireDepartment size={30} />
-                ¡Racha de {progreso.racha_actual} días seguidos! 🔥
-              </div>
+            
 
               {/* Botones de acción */}
               <div className="grid grid-cols-2 gap-5">

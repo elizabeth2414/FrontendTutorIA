@@ -1,4 +1,4 @@
-package com.bookireadia.app;
+package com.bookismartia.app;
 
 import com.getcapacitor.BridgeActivity;
 

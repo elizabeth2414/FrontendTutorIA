@@ -11,8 +11,16 @@ import ttsService from "../../services/ttsService";
 import { MdMic, MdStop, MdUpload, MdPlayArrow, MdMenuBook, MdReplay } from "react-icons/md";
 import ZonaPracticaIA from "../../components/lectura/ZonaPracticaIA";
 
+// ✅ Grabación nativa (Android/iOS)
+import {
+  isNativeApp,
+  startNativeRecording,
+  stopNativeRecording,
+} from "../../services/voiceRecorderService";
+
 export default function LecturaIAHijo() {
   const location = useLocation();
+  const esNativo = useMemo(() => isNativeApp(), []);
 
   // Estado general
   const [hijos, setHijos] = useState([]);
@@ -42,8 +50,17 @@ export default function LecturaIAHijo() {
   const [resultadoPractica, setResultadoPractica] = useState(null);
   const [cargandoPractica, setCargandoPractica] = useState(false);
 
-  // ✅ UI (solo diseño)
+  // ✅ UI
   const [panelConfigAbierto, setPanelConfigAbierto] = useState(false);
+
+  // Limpia URLs para no “comerse” memoria
+  useEffect(() => {
+    return () => {
+      if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+      if (previewPractica) URL.revokeObjectURL(previewPractica);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //  CARGAR DATOS INICIALES
   useEffect(() => {
@@ -63,7 +80,6 @@ export default function LecturaIAHijo() {
 
         setHijos(hijosFormateados);
 
-        // 🔥 AUTO-CARGAR SI VIENE DESDE OTRA VISTA
         const stateData = location.state;
 
         if (stateData?.estudianteId && stateData?.lectura) {
@@ -82,11 +98,9 @@ export default function LecturaIAHijo() {
 
               setLecturas(lecturasLista);
 
-              // Auto-seleccionar lectura
               const lecturaInfo = stateData.lectura;
               setLecturaSeleccionada(lecturaInfo);
 
-              // Cargar contenido completo
               setLectura({
                 id: lecturaInfo.id,
                 titulo: lecturaInfo.titulo,
@@ -107,22 +121,29 @@ export default function LecturaIAHijo() {
     };
 
     cargarHijos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const limpiarResultados = () => {
     setResultado(null);
     setEvaluacionId(null);
     setAudioArchivo(null);
+
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
     setAudioPreviewUrl(null);
+
     setEjercicioActivo(null);
     setAudioPractica(null);
+
+    if (previewPractica) URL.revokeObjectURL(previewPractica);
     setPreviewPractica(null);
+
     setResultadoPractica(null);
     ttsService.stop();
   };
 
   // ==========================
-  // Selección hijo
+  // Selección hijo (solo lo usa el padre/flujo inicial)
   // ==========================
   const manejarSeleccionHijo = async (e) => {
     const id = Number(e.target.value) || null;
@@ -183,7 +204,7 @@ export default function LecturaIAHijo() {
   };
 
   // ==========================
-  // ✅ Enviar lectura a IA (FIX: enviar cuando el blob exista)
+  // ✅ Enviar lectura a IA
   // ==========================
   const manejarEnviar = async (archivoParam = null) => {
     const archivoFinal = archivoParam || audioArchivo;
@@ -211,19 +232,32 @@ export default function LecturaIAHijo() {
       setResultado(data);
       if (data.evaluacion_id) setEvaluacionId(data.evaluacion_id);
     } catch (e) {
-      setErrorMsg(
-        e.message || "No pudimos escuchar bien el audio. Intenta grabar nuevamente."
-      );
+      setErrorMsg(e.message || "No pudimos escuchar bien el audio. Intenta grabar nuevamente.");
     } finally {
       setCargando(false);
     }
   };
 
   // ==========================
-  // Grabación lectura (FIX: enviar en onstop)
+  // 🎤 Grabación lectura (WEB o NATIVO)
   // ==========================
   const iniciarGrabacion = async () => {
+    setErrorMsg("");
+
     try {
+      // ✅ NATIVO (Android/iOS): plugin
+      if (esNativo) {
+        await startNativeRecording();
+        setGrabando(true);
+        return;
+      }
+
+      // ✅ WEB: MediaRecorder
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        setErrorMsg("Tu navegador no soporta grabación de audio.");
+        return;
+      }
+
       if (mediaRecorder?.state === "recording") mediaRecorder.stop();
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -241,29 +275,55 @@ export default function LecturaIAHijo() {
 
       recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
 
-      // ✅ Aquí el blob YA existe, así que aquí se envía
       recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
+
         setAudioArchivo(blob);
+
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
         setAudioPreviewUrl(URL.createObjectURL(blob));
+
         stream.getTracks().forEach((t) => t.stop());
 
-        // ✅ Enviar SOLO cuando ya existe el blob
         await manejarEnviar(blob);
       };
 
       recorder.start();
       setMediaRecorder(recorder);
       setGrabando(true);
-    } catch {
-      setErrorMsg("No se pudo acceder al micrófono.");
+    } catch (err) {
+      console.error(err);
+      // Si estás en Live Reload por HTTP, aquí suele fallar en Android
+      setErrorMsg(err?.message || "No se pudo acceder al micrófono.");
     }
   };
 
-  // ✅ FIX: ya NO llamamos manejarEnviar aquí (porque todavía no existe el blob)
-  const detenerGrabacion = () => {
-    mediaRecorder?.stop();
-    setGrabando(false);
+  const detenerGrabacion = async () => {
+    setErrorMsg("");
+
+    try {
+      // ✅ NATIVO: parar y enviar
+      if (esNativo) {
+        const { blob } = await stopNativeRecording();
+
+        setAudioArchivo(blob);
+
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+        setAudioPreviewUrl(URL.createObjectURL(blob));
+
+        setGrabando(false);
+        await manejarEnviar(blob);
+        return;
+      }
+
+      // ✅ WEB
+      mediaRecorder?.stop();
+      setGrabando(false);
+    } catch (err) {
+      console.error(err);
+      setGrabando(false);
+      setErrorMsg(err?.message || "No se pudo detener la grabación. Revisa permisos de micrófono.");
+    }
   };
 
   const manejarArchivo = (e) => {
@@ -271,15 +331,31 @@ export default function LecturaIAHijo() {
     if (!file) return;
 
     setAudioArchivo(file);
+
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
     setAudioPreviewUrl(URL.createObjectURL(file));
+
     e.target.value = "";
   };
 
   // ==========================
-  // Grabación práctica
+  // 🎤 Grabación práctica (WEB o NATIVO)
   // ==========================
   const iniciarGrabacionPractica = async () => {
+    setErrorMsg("");
+
     try {
+      if (esNativo) {
+        await startNativeRecording();
+        setGrabandoPractica(true);
+        return;
+      }
+
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        setErrorMsg("Tu navegador no soporta grabación de audio.");
+        return;
+      }
+
       if (mediaPractica?.state === "recording") mediaPractica.stop();
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -299,21 +375,44 @@ export default function LecturaIAHijo() {
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
         setAudioPractica(blob);
+
+        if (previewPractica) URL.revokeObjectURL(previewPractica);
         setPreviewPractica(URL.createObjectURL(blob));
+
         stream.getTracks().forEach((t) => t.stop());
       };
 
       recorder.start();
       setMediaPractica(recorder);
       setGrabandoPractica(true);
-    } catch {
-      setErrorMsg("No se pudo acceder al micrófono para la práctica.");
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err?.message || "No se pudo acceder al micrófono para la práctica.");
     }
   };
 
-  const detenerGrabacionPractica = () => {
-    mediaPractica?.stop();
-    setGrabandoPractica(false);
+  const detenerGrabacionPractica = async () => {
+    setErrorMsg("");
+
+    try {
+      if (esNativo) {
+        const { blob } = await stopNativeRecording();
+        setAudioPractica(blob);
+
+        if (previewPractica) URL.revokeObjectURL(previewPractica);
+        setPreviewPractica(URL.createObjectURL(blob));
+
+        setGrabandoPractica(false);
+        return;
+      }
+
+      mediaPractica?.stop();
+      setGrabandoPractica(false);
+    } catch (err) {
+      console.error(err);
+      setGrabandoPractica(false);
+      setErrorMsg(err?.message || "No se pudo detener la grabación de práctica. Revisa permisos.");
+    }
   };
 
   const manejarArchivoPractica = (e) => {
@@ -321,7 +420,10 @@ export default function LecturaIAHijo() {
     if (!file) return;
 
     setAudioPractica(file);
+
+    if (previewPractica) URL.revokeObjectURL(previewPractica);
     setPreviewPractica(URL.createObjectURL(file));
+
     e.target.value = "";
   };
 
@@ -370,7 +472,7 @@ export default function LecturaIAHijo() {
   }, [resultado]);
 
   // ==========================
-  // ✅ UI helpers (solo presentación)
+  // ✅ UI helpers
   // ==========================
   const precision = useMemo(() => {
     const v = resultado?.precision_global ?? 0;
@@ -391,7 +493,7 @@ export default function LecturaIAHijo() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-yellow-50 to-emerald-50">
       <div className="max-w-6xl mx-auto px-4 py-6 md:py-10 space-y-6 md:space-y-8">
-        {/* HEADER (sin ícono morado, solo camaleón) */}
+        {/* HEADER */}
         <header className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white/80 backdrop-blur-sm shadow-sm">
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-50 via-sky-50 to-emerald-50 opacity-80" />
 
@@ -433,7 +535,6 @@ export default function LecturaIAHijo() {
               </div>
             </button>
 
-            {/* Panel de intentos y precisión */}
             {resultado ? (
               <div className="flex items-center gap-3 bg-white/90 border border-amber-100 rounded-3xl px-4 py-3 shadow-sm">
                 <div className="flex flex-col">
@@ -451,6 +552,7 @@ export default function LecturaIAHijo() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={limpiarResultados}
                   className="ml-2 inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-700 px-2 py-1 rounded-xl hover:bg-slate-50"
                 >
@@ -468,7 +570,6 @@ export default function LecturaIAHijo() {
             )}
           </div>
 
-          {/* Barra de progreso visual (con amarillo) */}
           <div className="relative px-5 md:px-7 pb-5 md:pb-7">
             <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
               <span>Progreso de la misión</span>
@@ -483,9 +584,7 @@ export default function LecturaIAHijo() {
           </div>
         </header>
 
-        {/* ✅ SECCIÓN DE “PASOS” ELIMINADA (por pedido del usuario) */}
-
-        {/* PANEL PRINCIPAL (sin mostrar estudiante/lectura, sin botón “Cambiar misión”) */}
+        {/* PANEL PRINCIPAL */}
         <section className="bg-white/90 border border-slate-100 rounded-3xl p-4 md:p-5 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-start gap-3">
@@ -677,6 +776,7 @@ export default function LecturaIAHijo() {
               onSelectEjercicio={(ej) => {
                 setEjercicioActivo(ej);
                 setAudioPractica(null);
+                if (previewPractica) URL.revokeObjectURL(previewPractica);
                 setPreviewPractica(null);
                 setResultadoPractica(null);
               }}
@@ -688,7 +788,7 @@ export default function LecturaIAHijo() {
           </section>
         )}
 
-        {/* MODAL CONFIG (selección oculta) */}
+        {/* MODAL CONFIG (🔒 SOLO MUESTRA EL SELECCIONADO) */}
         {panelConfigAbierto && (
           <div className="fixed inset-0 z-50">
             <div
@@ -705,12 +805,13 @@ export default function LecturaIAHijo() {
                     <div>
                       <h3 className="text-base font-extrabold text-slate-800">Configurar lectura</h3>
                       <p className="text-xs text-slate-500">
-                        Aquí eliges estudiante y lectura (no se muestran en la vista principal).
+                        Aquí solo se muestra el estudiante y la lectura asignados.
                       </p>
                     </div>
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => setPanelConfigAbierto(false)}
                     className="px-3 py-2 rounded-2xl bg-white border border-slate-200 text-slate-700 text-sm font-extrabold hover:bg-slate-50"
                   >
@@ -721,48 +822,24 @@ export default function LecturaIAHijo() {
 
               <div className="p-4 md:p-5 space-y-4">
                 <div className="grid md:grid-cols-2 gap-4 text-sm">
-                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-3">
+                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4">
                     <p className="text-xs font-extrabold text-slate-700 mb-2 flex items-center gap-2">
                       <span className="text-lg">👦👧</span> Estudiante
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {hijos.map((est) => (
-                        <button
-                          key={est.id}
-                          onClick={() => manejarSeleccionHijo({ target: { value: est.id } })}
-                          className={[
-                            "px-4 py-2 rounded-2xl border text-sm font-extrabold transition active:scale-[0.99]",
-                            hijoSeleccionado?.id === est.id
-                              ? "border-indigo-300 bg-indigo-100 text-indigo-800"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                          ].join(" ")}
-                        >
-                          {est.nombre} {est.apellido}
-                        </button>
-                      ))}
-                    </div>
+                    <p className="text-sm font-extrabold text-slate-800">
+                      {hijoSeleccionado
+                        ? `${hijoSeleccionado.nombre} ${hijoSeleccionado.apellido}`
+                        : "No asignado"}
+                    </p>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-3">
+                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4">
                     <p className="text-xs font-extrabold text-slate-700 mb-2 flex items-center gap-2">
                       <span className="text-lg">📚</span> Lectura
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {lecturas.map((lec) => (
-                        <button
-                          key={lec.id}
-                          onClick={() => manejarSeleccionLectura({ target: { value: lec.id } })}
-                          className={[
-                            "px-4 py-2 rounded-2xl border text-sm font-extrabold transition active:scale-[0.99]",
-                            lecturaSeleccionada?.id === lec.id
-                              ? "border-emerald-300 bg-emerald-100 text-emerald-800"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                          ].join(" ")}
-                        >
-                          {lec.titulo}
-                        </button>
-                      ))}
-                    </div>
+                    <p className="text-sm font-extrabold text-slate-800">
+                      {lecturaSeleccionada ? `${lecturaSeleccionada.titulo}` : "No asignada"}
+                    </p>
                   </div>
                 </div>
 
@@ -784,6 +861,10 @@ export default function LecturaIAHijo() {
                     Reiniciar intento
                   </button>
                 </div>
+
+                <p className="text-xs text-slate-500">
+                  Nota Android: Ajustes → Apps → tu app → Permisos → Micrófono (Permitir).
+                </p>
               </div>
             </div>
           </div>
