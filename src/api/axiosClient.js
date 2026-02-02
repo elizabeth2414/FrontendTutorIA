@@ -2,15 +2,18 @@ import axios from "axios";
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
-// Base URL del backend
-const BASE_URL = "http://192.168.18.188:8000/api";
+// ✅ Base URL desde Vite env
+const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const BASE_URL = `${API_BASE}/api`;
+
+if (!API_BASE) {
+  console.warn("⚠️ Falta VITE_API_URL en tu .env / .env.production");
+}
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000, // 10 segundos
-  headers: {
-    "Content-Type": "application/json",
-  },
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
 });
 
 // Interceptor para agregar token a todas las peticiones
