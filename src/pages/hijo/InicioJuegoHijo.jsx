@@ -20,15 +20,7 @@ export default function InicioJuegoHijo() {
   const [progreso, setProgreso] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🦸 Avatares por nivel
-  // Cada héroe tiene su COLOR PROPIO (identidad del personaje).
-  // Si quieres usar IMÁGENES en lugar de iconos, reemplaza "icon" por "imagen":
-  //
-  //   { nivel: 1, nombre: "Explorador", imagen: "/assets/heroes/explorador.png", color: "..." }
-  //
-  // Y en el render cambias <Icon size={20} /> por:
-  //   <img src={a.imagen} alt={a.nombre} className="w-5 h-5 object-contain" />
-  //
+
   const avatares = [
     { nivel: 1, nombre: "Explorador",          icon: MdShield,   color: "from-blue-500 to-blue-600"       },
     { nivel: 2, nombre: "Lector Valiente",     icon: MdFlashOn,  color: "from-indigo-500 to-indigo-600"   },
