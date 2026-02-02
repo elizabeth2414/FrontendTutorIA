@@ -3,12 +3,23 @@ import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
 // ✅ Base URL desde Vite env
-const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
-const BASE_URL = `${API_BASE}/api`;
+const RAW_API_BASE = (import.meta.env.VITE_API_URL || "").trim();
 
+// Normaliza: quita "/" final
+let API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+
+// ✅ Blindaje: si el frontend está en HTTPS, jamás uses HTTP para backend (evita Mixed Content)
+if (typeof window !== "undefined" && window.location.protocol === "https:") {
+  API_BASE = API_BASE.replace(/^http:\/\//i, "https://");
+}
+
+// ✅ Si no está definida, al menos avisa (en prod debe venir)
 if (!API_BASE) {
   console.warn("⚠️ Falta VITE_API_URL en tu .env / .env.production");
 }
+
+// ✅ Evita duplicar /api si ya viene incluido en VITE_API_URL
+const BASE_URL = API_BASE.endsWith("/api") ? API_BASE : `${API_BASE}/api`;
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
@@ -36,16 +47,13 @@ axiosClient.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Interceptor para manejar errores de respuesta
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Si el token expiró (401), redirigir al login
     if (error.response?.status === 401) {
       // Limpiar token
       if (Capacitor.isNativePlatform()) {
@@ -55,7 +63,7 @@ axiosClient.interceptors.response.use(
         localStorage.removeItem("token");
         localStorage.removeItem("roles");
       }
-      
+
       // Redirigir al login
       window.location.href = "/login";
     }
