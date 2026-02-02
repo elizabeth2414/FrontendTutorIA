@@ -316,19 +316,18 @@ export default function DashboardDocente() {
       doc.setFont(undefined, 'normal');
       doc.text("Actividades Completadas", 149, cardY + 18);
 
-      // Tabla de estudiantes
+      // Tabla de estudiantes (SIN RACHA)
       const estudiantesData = estudiantesConProgreso.map((e) => [
         `${e.nombre} ${e.apellido}`,
         e.curso_nombre || "—",
         `Nivel ${e.nivel_gamificacion || 1}`,
         `${e.xp_total || 0} XP`,
-        `🔥 ${e.racha || 0}`,
         "Activo"
       ]);
 
       doc.autoTable({
         startY: 88,
-        head: [["Nombre", "Curso", "Nivel", "XP", "Racha", "Estado"]],
+        head: [["Nombre", "Curso", "Nivel", "XP", "Estado"]],
         body: estudiantesData,
         theme: "striped",
         headStyles: { 
@@ -348,8 +347,7 @@ export default function DashboardDocente() {
           1: { halign: 'left' },
           2: { halign: 'center', fillColor: [238, 242, 255], textColor: [99, 102, 241] }, // Nivel
           3: { halign: 'center', fillColor: [250, 245, 255], textColor: [147, 51, 234] }, // XP
-          4: { halign: 'center', fillColor: [255, 247, 237], textColor: [234, 88, 12] }, // Racha
-          5: { halign: 'center', fillColor: [240, 253, 244], textColor: [22, 163, 74] } // Estado
+          4: { halign: 'center', fillColor: [240, 253, 244], textColor: [22, 163, 74] } // Estado
         },
         alternateRowStyles: {
           fillColor: [249, 250, 251] // gray-50

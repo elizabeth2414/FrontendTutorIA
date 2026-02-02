@@ -2,5 +2,16 @@
   "appId": "com.bookismartia.app",
   "appName": "BookiSmartIA",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": false,
+    "allowNavigation": [
+      "tutor-ia-backend-6927.azurewebsites.net"
+    ]
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }
