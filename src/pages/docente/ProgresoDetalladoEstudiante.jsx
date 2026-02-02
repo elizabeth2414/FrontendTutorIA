@@ -278,13 +278,7 @@ export default function ProgresoDetalladoEstudiante() {
 
         {/* Botón de Zona Práctica */}
         <div className="mb-6">
-          <button
-            onClick={() => navigate(`/docente/menu/progreso/${estudianteId}/practica`)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold shadow-lg hover:from-emerald-600 hover:to-teal-700 transition-all hover:scale-105"
-          >
-            <MdAssessment size={20} />
-            Ver Historial de Zona Práctica
-          </button>
+          
         </div>
 
         {/* Selector de período para la gráfica */}
