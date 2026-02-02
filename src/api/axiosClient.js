@@ -1,25 +1,18 @@
+// src/api/axiosClient.js
 import axios from "axios";
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
-// ✅ Base URL desde Vite env
-const RAW_API_BASE = (import.meta.env.VITE_API_URL || "").trim();
+// 🔒 FORZAMOS HTTPS EN PRODUCCIÓN (Azure)
+const PROD_API = "https://tutor-ia-backend-6927.azurewebsites.net";
+const DEV_API = "http://localhost:8000";
 
-// Normaliza: quita "/" final
-let API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+const isProd =
+  typeof window !== "undefined" &&
+  window.location.hostname.includes("azurewebsites.net");
 
-// ✅ Blindaje: si el frontend está en HTTPS, jamás uses HTTP para backend (evita Mixed Content)
-if (typeof window !== "undefined" && window.location.protocol === "https:") {
-  API_BASE = API_BASE.replace(/^http:\/\//i, "https://");
-}
-
-// ✅ Si no está definida, al menos avisa (en prod debe venir)
-if (!API_BASE) {
-  console.warn("⚠️ Falta VITE_API_URL en tu .env / .env.production");
-}
-
-// ✅ Evita duplicar /api si ya viene incluido en VITE_API_URL
-const BASE_URL = API_BASE.endsWith("/api") ? API_BASE : `${API_BASE}/api`;
+const API_BASE = isProd ? PROD_API : DEV_API;
+const BASE_URL = `${API_BASE}/api`;
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
@@ -27,35 +20,26 @@ const axiosClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Interceptor para agregar token a todas las peticiones
-axiosClient.interceptors.request.use(
-  async (config) => {
-    let token = null;
+// Token
+axiosClient.interceptors.request.use(async (config) => {
+  let token = null;
 
-    // Obtener token según la plataforma
-    if (Capacitor.isNativePlatform()) {
-      const { value } = await Preferences.get({ key: "token" });
-      token = value;
-    } else {
-      token = localStorage.getItem("token");
-    }
+  if (Capacitor.isNativePlatform()) {
+    const { value } = await Preferences.get({ key: "token" });
+    token = value;
+  } else {
+    token = localStorage.getItem("token");
+  }
 
-    // Agregar token si existe
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Interceptor para manejar errores de respuesta
+// 401
 axiosClient.interceptors.response.use(
-  (response) => response,
+  (r) => r,
   async (error) => {
     if (error.response?.status === 401) {
-      // Limpiar token
       if (Capacitor.isNativePlatform()) {
         await Preferences.remove({ key: "token" });
         await Preferences.remove({ key: "roles" });
@@ -63,11 +47,8 @@ axiosClient.interceptors.response.use(
         localStorage.removeItem("token");
         localStorage.removeItem("roles");
       }
-
-      // Redirigir al login
       window.location.href = "/login";
     }
-
     return Promise.reject(error);
   }
 );
