@@ -2,5 +2,16 @@
   "appId": "com.bookismartia.app",
   "appName": "BookiSmartIA",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http",
+    "allowNavigation": [
+      "tutor-ia-backend-6927.azurewebsites.net",
+      "*.azurewebsites.net"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
 }
