@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">BookiSmartIA</string>
-    <string name="title_activity_main">BookiSmartIA</string>
-    <string name="package_name">com.bookismartia.app</string>
-    <string name="custom_url_scheme">com.bookismartia.app</string>
-</resources>
