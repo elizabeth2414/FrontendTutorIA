@@ -3,19 +3,27 @@ import axios from "axios";
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
-// 🔒 FORZAMOS HTTPS EN PRODUCCIÓN (Azure)
+// URLs base
 const PROD_API = "https://tutor-ia-backend-6927.azurewebsites.net";
 const DEV_API = "http://localhost:8000";
 
-const isProd =
-  typeof window !== "undefined" &&
-  window.location.hostname.includes("azurewebsites.net");
 
-const API_BASE = isProd ? PROD_API : DEV_API;
-const BASE_URL = `${API_BASE}/api`;
+const isLocalhost =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+
+const isProd = Capacitor.isNativePlatform() ? true : !isLocalhost;
+
+let API_BASE = isProd ? PROD_API : DEV_API;
+
+// 🔒 Blindaje extra: si por cualquier razón llega http, lo convertimos a https
+if (isProd && API_BASE.startsWith("http://")) {
+  API_BASE = API_BASE.replace("http://", "https://");
+}
 
 const axiosClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: `${API_BASE}/api`,
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
 });
@@ -54,4 +62,3 @@ axiosClient.interceptors.response.use(
 );
 
 export default axiosClient;
-
