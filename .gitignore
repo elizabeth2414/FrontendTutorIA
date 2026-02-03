@@ -32,3 +32,6 @@ Thumbs.db
 
 # --- Tailwind ---
 /.parcel-cache
+
+# --- Android ---
+android/
